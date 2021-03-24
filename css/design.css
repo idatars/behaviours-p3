@@ -1,5 +1,22 @@
-* {
-    margin: 0;
+html, body, #mapid { 
+    height: 100%;
+    width: 100%;
     padding: 0;
-    
-}
+    margin: 0;
+    }
+    #error {
+       position: absolute;
+       width: 80%;
+       margin: 0px;
+       z-index: 2000;
+       width: 80%;
+       border-radius: 20px;
+       max-width: 500px;
+       top: 30%;  /* position the top  edge of the element at the middle of the parent */
+       left: 50%; /* position the left edge of the element at the middle of the parent */
+       transform: translate(-50%, -50%);
+       background-color: white;
+       padding: 10px;
+       display: none;
+       text-align: center;
+   }
