@@ -5,10 +5,28 @@ var departureTime = new Date().toJSON();
 // Travel time in seconds. We want 1 hour travel time so it is 60 minutes x 60 seconds.
 var travelTime = 60 * 20;
 // These secret variables are needed to authenticate the request. Get them from http://docs.traveltimeplatform.com/overview/getting-keys/ and replace 
-var APPLICATION_ID = "c2928efa";
-var API_KEY = "71df45142247f399b1e64f949681cf06";
+const APPLICATION_ID = "c2928efa";
+const API_KEY = "71df45142247f399b1e64f949681cf06";
 
-var mymap = L.map('mapid').setView([38.8, -77.0365], 9);
+let mymap;
+let marker;
+let posn = null;
+
+function onSuccess(position) {
+    console.log(position);
+    posn = [position.coords.latitude, position.coords.longitude];
+    mymap = L.map('mapid').setView(posn, 9);
+    marker = L.marker(posn).addTo(mymap);
+}
+
+function onError(error) {
+    //alert("code: " + error.code + "\nmessage: " + error.message);
+    console.log(error);
+    mymap = L.map('mapid').setView([0, 0], 9);
+}
+
+navigator.geolocation.getCurrentPosition(onSuccess, onError, {timeout:10000, enableHighAccuracy: false, maximumAge: 0});
+
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
     maxZoom: 18,
@@ -18,7 +36,7 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     accessToken: 'pk.eyJ1IjoiaWRhdGFycyIsImEiOiJja2w5MHB2dWUwMzYyMndwZmM0djM3ZDVsIn0.T7Tr5He16zekwZXuBL9uUw'
 }).addTo(mymap);
 
-sendGeocodingRequest(startingLocation);
+/*sendGeocodingRequest(startingLocation);
 
 // Sends the geocoding request.
 function sendGeocodingRequest(location) {
@@ -48,7 +66,7 @@ function sendGeocodingRequest(location) {
     xhr.send();
 };
 
-
+console.log("coords");
 // Sends the request of the Time Map multipolygon.
 function sendTimeMapRequest(geocodingResponse) {
 
@@ -107,4 +125,4 @@ function sendTimeMapRequest(geocodingResponse) {
         map.fitBounds(polygon.getBounds());
 
     };
-}
+}*/
