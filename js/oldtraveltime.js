@@ -8,21 +8,31 @@ var travelTime = 60 * 20;
 const APPLICATION_ID = "c2928efa";
 const API_KEY = "71df45142247f399b1e64f949681cf06";
 
-let mymap;
+let mymap = L.map('mapid');
 let marker;
-let posn = null;
+let posn = null; // latLng
+let geolocationerror = false;
 
+
+function latLngtoArr(latLng) {
+    return [latLng.lat, latLng.lng];
+}
+
+// MAP SETUP ---------------------------------------
 function onSuccess(position) {
     console.log(position);
-    posn = [position.coords.latitude, position.coords.longitude];
-    mymap = L.map('mapid').setView(posn, 9);
-    marker = L.marker(posn).addTo(mymap);
+    posn = { lat: position.coords.latitude, lng: position.coords.longitude};
+    mymap.setView(latLngtoArr(posn), 9);
+    marker = L.marker(latLngtoArr(posn)).addTo(mymap);
+    document.getElementById("currentlocation").checked = true;
 }
 
 function onError(error) {
     //alert("code: " + error.code + "\nmessage: " + error.message);
     console.log(error);
-    mymap = L.map('mapid').setView([0, 0], 9);
+    mymap.setView([0, 0], 9);
+    geolocationerror = true;
+    document.getElementById("manuallocation").checked = true;
 }
 
 navigator.geolocation.getCurrentPosition(onSuccess, onError, {timeout:10000, enableHighAccuracy: false, maximumAge: 0});
@@ -36,7 +46,27 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     accessToken: 'pk.eyJ1IjoiaWRhdGFycyIsImEiOiJja2w5MHB2dWUwMzYyMndwZmM0djM3ZDVsIn0.T7Tr5He16zekwZXuBL9uUw'
 }).addTo(mymap);
 
-/*sendGeocodingRequest(startingLocation);
+function submit(e) {
+    e.preventDefault();
+
+    if (document.getElementById("currentlocation").checked) {
+        if (geolocationerror) { // LOCATION DID NOT WORK
+            return;
+        }
+        let travelmethod = "public_transport";
+        sendTimeMapRequest(posn, document.getElementById("traveltimeinput").value * 60, travelmethod);
+
+    } else if (document.getElementById("manuallocation").checked) {
+        sendGeocodingRequest(document.getElementById("locationinput").value);
+    }
+}
+
+document.getElementById("inputform").addEventListener("submit", (e) => submit(e));
+
+
+// ISOCHRONE
+
+//sendGeocodingRequest(startingLocation);
 
 // Sends the geocoding request.
 function sendGeocodingRequest(location) {
@@ -55,7 +85,12 @@ function sendGeocodingRequest(location) {
     xhr.onreadystatechange = function () {
         if (xhr.status >= 200 && xhr.status < 300) {
             if (xhr.readyState === 4) {
-                sendTimeMapRequest(xhr.response)
+                var coords = xhr.response.features[0].geometry.coordinates;
+                posn = { lat: coords[1], lng: coords[0] };
+                mymap.setView(latLngtoArr(posn), 9);
+                marker = L.marker(latLngtoArr(posn)).addTo(mymap);
+                let travelmethod = "public_transport";
+                sendTimeMapRequest(posn, document.getElementById("traveltimeinput").value * 60, travelmethod);
             }
         } else {
             if (APPLICATION_ID === "place your app id here" || API_KEY === "place your api key here") {
@@ -66,26 +101,22 @@ function sendGeocodingRequest(location) {
     xhr.send();
 };
 
-console.log("coords");
 // Sends the request of the Time Map multipolygon.
-function sendTimeMapRequest(geocodingResponse) {
+function sendTimeMapRequest(latLng, traveltime, travelmethod) {
 
 
     // The request for Time Map. Reference: http://docs.traveltimeplatform.com/reference/time-map/
-    var coords = geocodingResponse.features[0].geometry.coordinates;
-    console.log("coords");
-    var latLng = { lat: coords[1], lng: coords[0] };
 
     var request = {
         departure_searches: [{
             id: "first_location",
             coords: latLng,
             transportation: {
-                type: "public_transport"
+                type: travelmethod
             },
 
             departure_time: departureTime,
-            travel_time: travelTime
+            travel_time: traveltime
         }],
 
         arrival_searches: []
@@ -125,4 +156,4 @@ function sendTimeMapRequest(geocodingResponse) {
         map.fitBounds(polygon.getBounds());
 
     };
-}*/
+}
