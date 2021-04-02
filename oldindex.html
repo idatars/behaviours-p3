@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Drawing isochrones</title>
+</head>
+
+<body>
+    <!DOCTYPE html>
+    <html>
+    <meta name="description" content="Class 10 Show+Tell: GeoJson">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+
+    <head>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+            integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+            crossorigin="" />
+        <link rel="stylesheet" href="css/design.css" />
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
+    </head>
+
+    <body>
+        <div id="mapid"></div>
+        <div id="input">
+            <form id="inputform" onsubmit="return false">
+                <input type="radio" name="location" value="currentlocation" id="currentlocation">
+                <label for="currentlocation">Use current location</label>
+                <p id="autolocationerror"></p>
+                <input type="radio" name="location" value="manuallocation" id="manuallocation">
+                <label for="manuallocation">Enter a location</label>
+                <input type="text" placeholder="Your location" id="locationinput"><br>
+                <label for="traveltime">Travel time (minutes):</label>
+                <input type="number" min="1" max="60" id="traveltimeinput" value="15"><br>
+                <input type="submit" value="Go!" id="submit">
+            </form>
+        </div>
+        <button id="addperson">+</button>
+    </body>
+
+    </html>
+    <div id="error" class="tippy-tooltip honeybee-theme">
+        <p><b>No API and APPLICATION_ID key inserted </b></p>
+        <p><a href="http://docs.traveltimeplatform.com/overview/getting-keys/">Sign up for an API key</a>
+        <p>Place it in API and APPLICATION_ID variables</p>
+    </div>
+    <script src="js/index.js"></script>
+</body>
+
+</html>
