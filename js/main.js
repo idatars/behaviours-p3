@@ -68,6 +68,7 @@ function getIso() {
     }).done(function (data) {
         // Set the 'iso' source's data to what's returned by the API query
         map.getSource('iso').setData(data);
+        console.log(data);
 
     })
 };
@@ -121,7 +122,7 @@ document.getElementById("inputform").addEventListener("change", function (e) {
         } else { // geocode
             let query = e.target.value.replace(" ", "%20");
 
-            makeRequest("https://api.mapbox.com/geocoding/v5/mapbox.places/" + query + ".json?access_token=" + MAPBOX_ACCESS_CODE);
+            makeRequest("https://api.mapbox.com/geocoding/v5/mapbox.places/" + query + ".json?proximity=" + posn[0] + "," + posn[1] + "&access_token=" + MAPBOX_ACCESS_CODE);
         }
     }
 
