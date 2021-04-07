@@ -1,8 +1,15 @@
-html, body, #mapid { 
+html,
+body,
+#mapid {
     height: 100%;
     width: 100%;
     padding: 0;
     margin: 0;
+    font-family: forma-djr-deck, sans-serif;
+}
+
+#myLocationText {
+    font-size: 1.20em;
 }
 
 #map {
@@ -24,8 +31,10 @@ body {
     width: 80%;
     border-radius: 20px;
     max-width: 500px;
-    top: 30%;  /* position the top  edge of the element at the middle of the parent */
-    left: 50%; /* position the left edge of the element at the middle of the parent */
+    top: 30%;
+    /* position the top  edge of the element at the middle of the parent */
+    left: 50%;
+    /* position the left edge of the element at the middle of the parent */
     transform: translate(-50%, -50%);
     background-color: white;
     padding: 10px;
@@ -38,10 +47,284 @@ body {
     bottom: 0;
     left: 0;
     z-index: 1000;
-    padding: 30px;
-    background-color: beige;
+    padding: 0px 30px 0px 30px;
+    background-color: #F5F5F5;
+    width: 100%;
+    border-radius: 10px 10px 0 0;
+    border-top: 2px solid #ddd;
+}
+
+#input2 {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    padding: 0px 30px 0px 30px;
+    background-color: #F5F5F5;
+    width: 100%;
+    border-radius: 10px 10px 0 0;
+    border-top: 2px solid #ddd;
 }
 
 #autolocationerror {
     display: none;
 }
+
+
+/* -- top content box -- */
+#topContent {
+    position: absolute;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    z-index: 1000;
+    background-color: #707070;
+    color: white;
+    height: 4em;
+    width: 100%;
+    border-radius: 0 0 15px 15px;
+
+
+}
+
+#picker {
+    margin: auto auto;
+}
+
+.span2 {
+    grid-column: span 2;
+}
+
+.span3 {
+    grid-column: span 3;
+}
+
+.span4 {
+    grid-column: span 4;
+}
+
+.span5 {
+    grid-column: span 5;
+}
+
+.span6 {
+    grid-column: span 6;
+}
+
+.span8 {
+    grid-column: span 8;
+}
+
+.topText {
+    display: flex;
+    margin: auto auto;
+    font-size: 6vw;
+
+
+}
+
+
+select {
+    padding: 0.25em 2.5em 0.25em 0.5em;
+    /* font-size: 1.3em; */
+    font-size: 5vw;
+    max-height: 47px;
+    border-radius: 5px;
+}
+
+#picker {
+    margin: auto 0;
+}
+
+
+
+
+
+
+/*@@@@@@@@@@@@@@@@@@@ tabs stuff */
+#myLocationTab {
+    position: absolute;
+
+    /* left: 0px; */
+    background-color: #3e57d0;
+    color: white;
+    padding: 0.5em 1em 3em 1em;
+    border-radius: 15px 15px 0 0;
+
+}
+#buddy1Tab {
+    position: absolute;
+
+    left: 125px;
+    background-color: maroon;
+    color: white;
+    padding: 0.5em 1em 3em 1em;
+    border-radius: 15px 15px 0 0;
+
+}
+
+#addBud1 {
+    position: absolute;
+
+    right: 0px;
+    background-color: #707070;
+    padding: 0.5em 1em 2.65em 1em;
+    border-radius: 15px 15px 0 0;
+    color: white;
+    font-size: 1.2em;
+
+}
+
+#removeBud1{
+    z-index: 1000;
+}
+
+
+
+
+#addPic {
+    margin: auto auto;
+}
+
+img {
+    vertical-align: middle;
+}
+
+.buddyText{
+    font-size: 1.2em;
+    /* padding: 1em; */
+}
+
+/* this makes the active tab higher */
+.activeTab {
+    bottom: 245px;
+}
+
+.inactiveTab {
+    bottom: 230px;
+}
+
+
+/* @@@@@@@@@@@@@@@@@@@@form stuff */
+form {
+    text-align: center;
+
+}
+
+form>input {
+    margin-bottom: 1.5em;
+
+}
+
+#locationinput {
+    border-top-width: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 2px;
+    border-color: #bbb;
+    background-color: #F5F5F5;
+}
+
+#formPin {
+    vertical-align: bottom;
+    height: 40px;
+}
+
+.locationAndPin {
+    display: inline-block;
+    margin: auto auto;
+    padding: 1em 0 1.35em 0;
+
+}
+
+#submit {
+    margin-top: 1em;
+    margin-bottom: 1.5em;
+    border-radius: 8px;
+    border: none;
+    padding: 0.5em 1em;
+    background-color: #707070;
+    color: white;
+}
+
+/* italicizes the placeholder text */
+::-webkit-input-placeholder {
+    font-style: italic;
+}
+
+
+/* time input box styling */
+#traveltimeinput {
+    border-radius: 5px;
+    border-width: 2px;
+    margin-right: 3px;
+}
+
+/* radio button hiding */
+[type=radio] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* radio button clickability */
+[type=radio]+svg {
+    cursor: pointer;
+}
+
+/* button spacing */
+label {
+    margin: 0 1em 0 1em;
+}
+
+
+/* svg styling active and inactive buttons */
+.activeBox {
+    fill: #707070;
+}
+
+.inactiveBox {
+    fill: #fff;
+}
+
+.activeIcon {
+    fill: white;
+}
+
+.inactiveIcon {
+    fill: #707070;
+}
+
+/* disappear (get rid of img in new bud tab)*/
+.disappear {
+    display: none;
+}
+
+/* appear (bring back img in new bud tab)*/
+.appear {
+    display: block;
+}
+
+
+/* @@@@@@@@@@@@@@@@@@@@@@@@@ form2 (budddy 1) */
+
+#locationinput2{
+    border-top-width: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 2px;
+    border-color: #bbb;
+    background-color: #F5F5F5;
+}
+
+#traveltimeinput2{
+    border-radius: 5px;
+    border-width: 2px;
+    margin-right: 3px;
+}
+
+
+
+
+
+
