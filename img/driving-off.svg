@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="35" height="36" viewBox="0 0 35 36">
+  <g id="Group_33" data-name="Group 33" transform="translate(-0.068 -0.086)">
+    <g id="Rectangle_11" data-name="Rectangle 11" transform="translate(0.068 0.086)" fill="#fff" stroke="#e1e1e1" stroke-width="1">
+      <rect width="35" height="36" rx="9" stroke="none"/>
+      <rect x="0.5" y="0.5" width="34" height="35" rx="8.5" fill="none"/>
+    </g>
+    <path id="Icon_awesome-car-side" data-name="Icon awesome-car-side" d="M22.259,8.8H21.6L17.154,3.233a2.62,2.62,0,0,0-2.045-.983H6.356A2.618,2.618,0,0,0,3.924,3.9L1.964,8.889A2.613,2.613,0,0,0,0,11.416V16a.655.655,0,0,0,.655.655H2.619a3.928,3.928,0,1,0,7.856,0h5.237a3.928,3.928,0,1,0,7.856,0h1.964A.655.655,0,0,0,26.187,16V12.725A3.928,3.928,0,0,0,22.259,8.8ZM6.547,18.617a1.964,1.964,0,1,1,1.964-1.964A1.966,1.966,0,0,1,6.547,18.617ZM9.493,8.8H4.785L6.356,4.869H9.493Zm1.964,0V4.869h3.652L18.251,8.8Zm8.184,9.82A1.964,1.964,0,1,1,21.6,16.653,1.966,1.966,0,0,1,19.641,18.617Z" transform="translate(4.781 4.869)" fill="#707070"/>
+  </g>
+</svg>
