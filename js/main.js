@@ -106,6 +106,12 @@ function submit(e) {
     // Make the API call
     getIso();
     loaded = true;
+
+
+
+
+ 
+
 }
 
 document.getElementById("inputform").addEventListener("submit", (e) => submit(e));
@@ -174,6 +180,14 @@ function updatePosn() {
 
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    VONNE CODE    @@@@@@@@@@@@@@@@
+
+// defining containers for div switching
+let inputContainer = document.getElementById("inputContainer");
+let resultsContainer = document.getElementById("resultsContainer");
+
+
+
+
 
 // defining variables for buttons for modes of transportation
 let boxFillDriving = document.getElementById("boxFillDriving");
@@ -363,6 +377,30 @@ let input = document.getElementById("input"); // bottom div, my location
 let input2 = document.getElementById("input2"); // bottom div, bud 1
 
 
+// switching divs
+// your location input
+let traveltimeinput=document.getElementById("traveltimeinput");
+let resultsDivOn = () => {
+       // @@@@@ VONNE CODE
+    // switching visibility of divs
+if (traveltimeinput.value >= 1){
+    inputContainer.classList.add("disappear");
+    resultsContainer.classList.remove("disappear");
+    console.log("laksd");
+
+}}
+// buddy1 input
+let traveltimeinput2=document.getElementById("traveltimeinput2");
+let resultsDivOn2 = () => {
+       // @@@@@ VONNE CODE
+    // switching visibility of divs
+if (traveltimeinput2.value >= 1){
+    inputContainer.classList.add("disappear");
+    resultsContainer.classList.remove("disappear");
+    console.log("laksd");
+
+}}
+
 
 
 // @@@@@@@@@@@@@@@ adding buddy
@@ -432,23 +470,7 @@ let budSwitch1 = () => {
       input.classList.remove("disappear");
   
 
-    // bud1Text.innerHTML = "asda";
-    // console.log("working");
-
-    // addBud1.classList.remove("activeTab");
-    // removeBud1.classList.add("disappear"); // toggles x button
-    // addBud1.classList.add("inactiveTab");
-
-
-    // myLocationTab.classList.add("activeTab");
-    // myLocationTab.classList.remove("inactiveTab");
-
-
-    // addBud1.innerHTML = "<img id='addPic' src='img/person-add.svg'>";
-    // addBud1.classList.remove("activeTab");
-    // addBud1.classList.add("inactiveTab");
-    // myLocationTab.classList.add("activeTab");
-    // myLocationTab.classList.remove("inactiveTab");
+ 
 }
 
 
@@ -467,8 +489,133 @@ let myTab = () => {
     input2.classList.add("disappear");
     input.classList.remove("disappear");
 
-    // addBud1.classList.remove("activeTab");
-    // addBud1.classList.add("inactiveTab");
-    // myLocationTab.classList.add("activeTab");
-    // myLocationTab.classList.remove("inactiveTab");
 }
+
+
+
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@  RESULTS STUFF
+// defining variables
+let copyA = document.getElementById("copyA");
+let tooltipContainer = document.getElementById("tooltipContainer");
+
+
+
+
+
+// COPYING NAME AND ADDRESS
+let copyAddressA = () => {
+    let aux = document.createElement("input");
+aux.setAttribute("value", document.getElementById("choiceA").innerHTML + " - " + document.getElementById("choiceAddressA").innerHTML);
+document.body.appendChild(aux);
+aux.select();
+document.execCommand("copy");
+document.body.removeChild(aux)
+tooltipContainer.classList.remove("disappear");
+tooltipContainer.classList.add("appear");
+console.log("YAAAAA");
+// setTimeout(function(){
+//     tooltipContainer.classList.remove("appear");
+//     tooltipContainer.classList.add("disappear");
+// })
+
+}
+
+let copyAddressB = () => {
+    let aux = document.createElement("input");
+aux.setAttribute("value", document.getElementById("choiceB").innerHTML + " - " + document.getElementById("choiceAddressB").innerHTML);
+document.body.appendChild(aux);
+aux.select();
+document.execCommand("copy");
+document.body.removeChild(aux)
+}
+
+let copyAddressC = () => {
+    let aux = document.createElement("input");
+aux.setAttribute("value", document.getElementById("choiceC").innerHTML + " - " + document.getElementById("choiceAddressC").innerHTML);
+document.body.appendChild(aux);
+aux.select();
+document.execCommand("copy");
+document.body.removeChild(aux)
+}
+
+let copyAddressD = () => {
+    let aux = document.createElement("input");
+aux.setAttribute("value", document.getElementById("choiceD").innerHTML + " - " + document.getElementById("choiceAddressD").innerHTML);
+document.body.appendChild(aux);
+aux.select();
+document.execCommand("copy");
+document.body.removeChild(aux)
+}
+
+let copyAddressE = () => {
+    let aux = document.createElement("input");
+aux.setAttribute("value", document.getElementById("choiceE").innerHTML + " - " + document.getElementById("choiceAddressE").innerHTML);
+document.body.appendChild(aux);
+aux.select();
+document.execCommand("copy");
+document.body.removeChild(aux)
+}
+
+// back button
+let backTabs = () => {
+    inputContainer.classList.remove("disappear");
+    resultsContainer.classList.add("disappear");
+    up.classList.remove("rotate");
+    up.classList.add("upright");
+    myElement.style.bottom = "-20em";
+    
+}
+
+
+
+// results div up
+
+let up=document.getElementById("up");
+
+
+
+
+// hammer stuff
+let myElement = document.getElementById('resultsDiv');
+
+// create a simple instance
+// by default, it only adds horizontal recognizers
+let mc = new Hammer(myElement);
+
+// // let the pan gesture support all directions.
+// // this will block the vertical scrolling on a touch-device while on the element
+mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+
+// // listen to events...
+mc.on("panup", function(ev) {
+    myElement.style.bottom ="0em";
+    console.log("HAMMER");
+    up.classList.add("rotate");
+    up.classList.remove("upright");
+});
+mc.on("pandown", function(ev) {
+    myElement.style.bottom ="-20em";
+    console.log("HAMMER2");
+    up.classList.remove("rotate");
+    up.classList.add("upright");
+
+    // up.src="img/up.svg";
+});
+
+
+
+
+// var myElement = document.getElementById('myElement');
+
+// // create a simple instance
+// // by default, it only adds horizontal recognizers
+// var mc = new Hammer(myElement);
+
+// // let the pan gesture support all directions.
+// // this will block the vertical scrolling on a touch-device while on the element
+// mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+
+// // listen to events...
+// mc.on("panleft panright panup pandown tap press", function(ev) {
+//     myElement.textContent = ev.type +" gesture detected.";
+// });
