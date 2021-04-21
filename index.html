@@ -24,13 +24,16 @@
 
   <link href="css/design.css" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/pbj1mma.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
 
 
 </head>
 
 <body>
 
-
+<!-- splash -->
+<div class="splash"><img class="fade-in" id="logo" src="img/logo.svg"> </div>
   <!-- top stuff w/ dropdown menu -->
 
 
@@ -62,13 +65,13 @@
 
     <!-- tabs for switching the person -->
     <a href="#">
-      <div id="tab0" class="activeTab" data-userindex="0"> <span id="myLocationText">My Location</span></div>
+      <div id="tab0" class="activeTab" data-userindex="0"> <span id="myLocationText"><strong>My Location</strong></span></div>
     </a>
 
 
     <a href="#">
       <div id="tab1" class="inactiveTab disappear" data-userindex="1">
-        <span class="buddyText"> Buddy 1 &nbsp;</span>
+        <span class="buddyText"> <strong>Buddy 1</strong> &nbsp;</span>
     </a>
     <object><a id='removeBud1' width="15px" height="15px"><img src="img/removeBud.svg"></object>
   </div></a>
@@ -173,10 +176,13 @@
 
       </label>
       <br>
+      
       <input type="submit" value="Find a Spot" id="submit" onclick="resultsDivOn()">
     </form>
   </div>
 
+
+    <!--@@@@ input form bud1 -->
 
   <div id="input1" class="disappear tab">
     <form id="inputform1" onsubmit="return false" data-userindex="1">
@@ -436,9 +442,31 @@
 
   <div class="disappear" id="tooltipContainer">
     <div id="tooltip">
-      <h1>Address copied!</h1>
+      <img src="img/copied.svg">
     </div>
   </div>
+
+
+
+
+
+
+
+
+
+   <!-- ERROR MESSAGE -->
+  <div class="disappear" id="errorContainer">
+    <div id="errorMessage">
+      <a id='closeError' width="25px" height="25px" onclick="closeErrorContainer();"><img src="img/closeError.svg"></a>
+      <img src="img/sadboi.svg"><br>
+      texttext
+    </div>
+  </div>
+
+
+ 
+
+
 
 
 

@@ -5,7 +5,7 @@ body,
     width: 100%;
     padding: 0;
     margin: 0;
-    font-family: forma-djr-deck, sans-serif;
+    font-family: Barlow, sans-serif;
     overflow: hidden;
 }
 
@@ -19,6 +19,70 @@ body,
     bottom: 22em;
     width: 100%;
 } 
+
+input{
+    font-family: Barlow, sans-serif;
+}
+
+input[type=submit]{
+font-weight: 700;
+font-size: 1em;    
+}
+/* splash */
+
+.splash{
+    position: fixed;
+    display: flex;
+    align-items:center;
+    justify-content: center;
+    
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: #635E54;
+    z-index: 9348204832;
+    color: #FFA011;
+    text-align: center;
+    margin: auto auto;
+}
+.splash.display-none{
+    position: fixed;
+    display: flex;
+    align-items:center;
+    justify-content: center;
+    opacity:0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: #635E54;
+    z-index: -100;
+    color: #FFA011;
+    text-align: center;
+    margin: auto auto;
+    transition: all 0.5s;
+}
+
+#logo{
+    width: 60%;
+}
+
+@keyframes fadeIn{
+    to{
+        opacity: 1;
+    }
+}
+
+.fade-in{
+    opacity: 0;
+    animation: fadeIn 1s ease-in forwards;
+}
+
+
+
+
+/* end splash */
 
 body {
     position: relative;
@@ -49,10 +113,10 @@ body {
     left: 0;
     z-index: 1002;
     padding: 0px 30px 0px 30px;
-    background-color: #F5F5F5;
+    background-color: #F4F0E8;
     width: 100%;
     border-radius: 10px 10px 0 0;
-    border-top: 2px solid #ddd;
+    border-top: 1px solid #635E54;
 }
 
 #input1 {
@@ -61,11 +125,10 @@ body {
     left: 0;
     z-index: 1000;
     padding: 0px 30px 0px 30px;
-    background-color: #F5F5F5;
+    background-color: #F4F0E8;
     width: 100%;
     border-radius: 10px 10px 0 0;
-    border-top: 2px solid #ddd;
-}
+    border-top: 1px solid #635E54;}
 
 #autolocationerror {
     display: none;
@@ -78,7 +141,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
     z-index: 1000;
-    background-color: #707070;
+    background-color: #635E54;
     color: white;
     height: 4em;
     width: 100%;
@@ -125,13 +188,14 @@ body {
     display: flex;
     margin: auto auto;
     font-size: 6vw;
+    /* margin-left: 5px; */
 
 
 }
 
 
 select {
-    padding: 0.25em 2.5em 0.25em 0.5em;
+    padding: 0.25em 0.9em 0.25em 0.5em;
     /* font-size: 1.3em; */
     font-size: 5vw;
     max-height: 47px;
@@ -152,7 +216,7 @@ select {
     position: absolute;
 z-index: 1000;
     /* left: 0px; */
-    background-color: #3e57d0;
+    background-color: #FFA011;
     color: white;
     padding: 0.5em 1em 3em 1em;
     border-radius: 15px 15px 0 0;
@@ -173,7 +237,7 @@ z-index: 1000;
     position: absolute;
     z-index: 1000;
     right: 0px;
-    background-color: #707070;
+    background-color: #635E54;
     padding: 0.5em 1em 2.65em 1em;
     border-radius: 15px 15px 0 0;
     color: white;
@@ -222,13 +286,21 @@ form>input {
 
 }
 
-#locationinput {
+#locationinput0 {
     border-top-width: 0;
     border-left-width: 0;
     border-right-width: 0;
     border-bottom-width: 2px;
     border-color: #bbb;
-    background-color: #F5F5F5;
+    background-color: #F4F0E8;
+}
+#locationinput1 {
+    border-top-width: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 2px;
+    border-color: #bbb;
+    background-color: #F4F0E8;
 }
 
 #formPin {
@@ -249,7 +321,16 @@ form>input {
     border-radius: 8px;
     border: none;
     padding: 0.5em 1em;
-    background-color: #707070;
+    background-color: #635E54;
+    color: white;
+}
+#submit1 {
+    margin-top: 1em;
+    margin-bottom: 1.5em;
+    border-radius: 8px;
+    border: none;
+    padding: 0.5em 1em;
+    background-color: #635E54;
     color: white;
 }
 
@@ -287,11 +368,11 @@ label {
 
 /* svg styling active and inactive buttons */
 .activeBox {
-    fill: #707070;
+    fill: #635E54;
 }
 
 .inactiveBox {
-    fill: #fff;
+    fill: #C9C9C9;
 }
 
 .activeIcon {
@@ -299,8 +380,7 @@ label {
 }
 
 .inactiveIcon {
-    fill: #707070;
-}
+    fill: white;}
 
 /* disappear (get rid of img in new bud tab)*/
 .disappear {
@@ -328,7 +408,26 @@ animation-iteration-count:inherit;
     opacity: 0;
 }
 } 
+ 
 
+.appearStay {
+    display: block;
+    opacity: 1;
+ animation-name: appearing2;
+ animation-fill-mode:forwards;
+ animation-duration: 0.5s;
+ animation-iteration-count:inherit;
+ }
+ @keyframes appearing2{
+    0%{
+        opacity: 0;
+    }
+  
+    
+    100%{
+        opacity: 1;
+    }
+    } 
 
 /* @@@@@@@@@@@@@@@@@@@@@@@@@ form2 (budddy 1) */
 
@@ -360,11 +459,11 @@ animation-iteration-count:inherit;
     left: 0;
     z-index: 1001;
     padding: 0px 30px 0px 30px;
-    background-color: #F5F5F5;
+    background-color: #F0E8DC;
     width: 100%;
 height: 40em;
     border-radius: 10px 10px 0 0;
-    border-top: 2px solid #ddd;
+    border-top: 1px solid #635E54;
 }
 
 .divDown{
@@ -428,11 +527,15 @@ margin: auto 0.5em auto 0.25em;
 }
 
 h1{
-    font-size: 1.3em;
+    font-size: 1.1em;
     font-weight:bold;
+    color: #635E54;
+    overflow: hidden; 
 }
 .textCard{
-    margin: auto auto;
+    display: inline-block;
+    margin: 0 0 0 5px;
+    white-space: nowrap;text-overflow: ellipsis;
 }
 
 .linkIcon{
@@ -443,10 +546,12 @@ h1{
 }
 h2{
     font-size: 3vw;
+    color: #635E54;
 }
 h3{
     font-size: 0.75em;
-    color:gray;}
+    color:gray;
+font-style: italic;}
 
 
 /* TOOLTIP */
@@ -464,12 +569,15 @@ h3{
     right: 0;
     width: 17em;
     text-align: center;
-    transition: 0.5s all;
+    transition: 1s all;
     opacity: 0;
 }
 
-#tooltip h1{
-    padding: 1.5em 0em;
+#tooltip{
+    padding: 1.5em 1em;
+    background-color: #F0E8DC;
+    border-radius: 10px;
+    border: 1px burlywood solid;
 }
 
 
@@ -481,4 +589,36 @@ transition: 0.5s all;
 .upright{
 transform: rotate(360deg);
 transition: 0.5s all;
+}
+
+/*ERRORS---- */
+#errorContainer{ 
+    z-index: 696969696969;
+    border-radius: 12px;
+   margin: 0 auto;
+    /* display: block; */
+    /* color: red; */
+    background-color: #AAAAAA;
+    color: white;
+    position: absolute;
+    top: 45%;
+    left: 0;
+    right: 0;
+    width: 17em;
+    text-align: center;
+    transition: 1s all;
+    opacity: 0;
+}
+#errorMessage{
+    padding: 1.5em 1em;
+    background-color: #F0E8DC;
+    color: #635E54;
+    border-radius: 10px;
+    border: 1px burlywood solid;
+}
+#closeError{
+    position: absolute;
+    top: 5px;
+    right: 10px;
+
 }
