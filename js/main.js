@@ -1,7 +1,7 @@
 const MAPBOX_ACCESS_CODE = "pk.eyJ1IjoiaWRhdGFycyIsImEiOiJja2w5MHB2dWUwMzYyMndwZmM0djM3ZDVsIn0.T7Tr5He16zekwZXuBL9uUw";
 mapboxgl.accessToken = MAPBOX_ACCESS_CODE;
 const defaultposn = [-77.0369, 38.895];
-const usercolours = ["#FFA011", "#800000", "#314ccd"];
+const usercolours = ["#FFA011", "#800000", "#6A7A5B"];
 const resultcolor = "#635E54";
 const defaulttime = 15;
 const defaulttransportation = "walking";
@@ -472,7 +472,7 @@ function switchtabs(fromindex, toindex) {
 
 document.getElementById("tab0").addEventListener("click", (e) => {switchtabs(currentuser, 0)});
 document.getElementById("tab1").addEventListener("click", (e) => {switchtabs(currentuser, 1)});
-//document.getElementById("tab2").addEventListener("click", (e) => {switchtabs(currentuser, 2)});
+document.getElementById("tab2").addEventListener("click", (e) => {switchtabs(currentuser, 2)});
 
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@  RESULTS STUFF
@@ -519,14 +519,24 @@ let up = document.getElementById("up");
 
 // hammer stuff
 let myElement = document.getElementById('resultsDiv');
+let locationDiv0 = document.getElementById('input0');
+let locationDiv1 = document.getElementById('input1');
+let locationDiv2 = document.getElementById('input2');
 
 // create a simple instance
 // by default, it only adds horizontal recognizers
 let mc = new Hammer(myElement);
 
+let div0 = new Hammer(locationDiv0);
+let div1 = new Hammer(locationDiv1);
+let div2 = new Hammer(locationDiv2);
 // // let the pan gesture support all directions.
 // // this will block the vertical scrolling on a touch-device while on the element
 mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+
+div0.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+div1.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+div2.get('pan').set({ direction: Hammer.DIRECTION_ALL });
 
 // // listen to events...
 mc.on("panup", function (ev) {
@@ -551,6 +561,22 @@ mc.on("panright", function (ev) {
     myElement.style.bottom = "-20em";
 });
 
+
+
+div0.on("panleft", function (ev) {
+    inputContainer.classList.add("disappear");
+    resultsContainer.classList.remove("disappear");
+})
+
+div1.on("panleft", function (ev) {
+    inputContainer.classList.add("disappear");
+    resultsContainer.classList.remove("disappear");
+})
+
+div2.on("panleft", function (ev) {
+    inputContainer.classList.add("disappear");
+    resultsContainer.classList.remove("disappear");
+})
 
 
 
