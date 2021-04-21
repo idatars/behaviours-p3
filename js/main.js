@@ -36,7 +36,7 @@ let currentuser = 0;
 
 function User(index) {
     this.index = index;
-    this.posn = defaultposn;
+    this.posn = null;
     this.transportation = defaulttransportation;
     this.minutes = defaulttime;
     this.marker = new mapboxgl.Marker({
@@ -110,7 +110,7 @@ function onSuccess(position) {
 function onError(error) {
     console.log(error);
     geolocationerror = true;
-    //document.getElementById("manuallocation").checked = true;
+    users[0].posn = defaultposn;
 
     setTimeout(()=>{
         splash.classList.add('display-none');
@@ -136,7 +136,7 @@ const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/';
 
 // Create a function that sets up the Isochrone API query then makes an Ajax call
 function getIso(user) {
-    if (user.posn == null) return;
+    if (user.posn == null || !user.loaded) return;
     var query = urlBase + user.transportation + '/' + user.posn[0] + ',' + user.posn[1] + '?contours_minutes=' + user.minutes + '&polygons=true&access_token=' + mapboxgl.accessToken;
 
     $.ajax({
@@ -151,45 +151,11 @@ function getIso(user) {
 
 };
 
-// initially loads the isochrone
-function submit() {
-    // Make the API call
-    for (let i = 0; i < users.length; i++) {
-        if (!users[i].loaded) {
-            map.addSource('iso' + i, {
-                type: 'geojson',
-                data: {
-                    'type': 'FeatureCollection',
-                    'features': []
-                }
-            });
-
-            map.addLayer({
-                'id': 'isoLayer' + i,
-                'type': 'fill',
-                // Use "iso" as the data source for this layer
-                'source': 'iso' + i,
-                'layout': {},
-                'paint': {
-                    // The fill color for the layer is set to a light purple
-                    'fill-color': usercolours[i],
-                    'fill-opacity': 0.3
-                }
-            }, "poi-label");
-
-            getIso(users[i]);
-            users[i].loaded = true;
-        }
-    }
-}
-
-document.getElementById("inputform0").addEventListener("submit", submit);
-document.getElementById("inputform1").addEventListener("submit", submit);
-document.getElementById("inputform2").addEventListener("submit", submit);
-
 // updates the isochrone
 function update(e, userindex) {
     let user = users[userindex];
+
+    // make changes to parameters
     if (e.target.name == "traveltimeinput" + userindex) {
         user.minutes = e.target.value;
     } else if (e.target.name == "transportation" + userindex) {
@@ -254,20 +220,55 @@ function update(e, userindex) {
         }
     } else if (e.target.name == "locationinput" + userindex) {
         if (e.target.value == "") { //use geolocation
-            if (geolocationerror) {
+            if (userindex != 0) { // geolocation invalid bc not main user, reset user basically
+                if (user.isochrone != null) {
+                    map.removeLayer("isoLayer" + userindex);
+                    map.removeSource("iso" + userindex);
+                    user.isochrone = null;
+                    user.loaded = false;
+                }
+                user.posn = null;
+                user.marker.remove();
+                search();
+                return;
+            } else if (geolocationerror) {
                 console.log("how did I end up here");
                 return; // add user stuff for this
-            }
-
+            } else user.posn = geolocation;
         } else { // geocode
             if (e.target.value == "") return;
             let query = e.target.value.replace(" ", "%20");
 
-            makeRequest("https://api.mapbox.com/geocoding/v5/mapbox.places/" + query + ".json?proximity=" + user.posn[0] + "," + user.posn[1] + "&access_token=" + MAPBOX_ACCESS_CODE, user);
+            makeRequest("https://api.mapbox.com/geocoding/v5/mapbox.places/" + query + ".json?proximity=" + users[0].posn[0] + "," + users[0].posn[1] + "&access_token=" + MAPBOX_ACCESS_CODE, user);
         }
     }
 
     if (user.loaded) getIso(user);
+    else { // initally renders isochrone
+        map.addSource('iso' + userindex, {
+            type: 'geojson',
+            data: {
+                'type': 'FeatureCollection',
+                'features': []
+            }
+        });
+
+        map.addLayer({
+            'id': 'isoLayer' + userindex,
+            'type': 'fill',
+            // Use "iso" as the data source for this layer
+            'source': 'iso' + userindex,
+            'layout': {},
+            'paint': {
+                // The fill color for the layer is set to a light purple
+                'fill-color': usercolours[userindex],
+                'fill-opacity': 0.3
+            }
+        }, "poi-label");
+
+        getIso(user);
+        user.loaded = true;
+    }
 }
 document.getElementById("inputform0").addEventListener("change", (e) => {update(e, 0)});
 document.getElementById("inputform1").addEventListener("change", (e) => {update(e, 1)});
@@ -296,7 +297,7 @@ function updatePosn(user) {
             user.posn = result.features[0].center;
 
             rendermarker(user);
-            submit();
+            getIso(user);
         } else {
             alert('There was a problem with the request.');
         }
@@ -305,12 +306,12 @@ function updatePosn(user) {
 
 // SEARCH
 
-function search() {
+function search() { // free me please
     let resultdivs = document.getElementsByClassName("resultsdiv");
     let options = {tolerance: 0.00005, highQuality: false};
-    let isochrone = turf.simplify(turf.polygon([users[0].isochrone]), options);
-    for (let i = 1; i < users.length; i++) {
-        isochrone = turf.intersect(isochrone, turf.polygon([users[i].isochrone]));
+
+    if (users[0].isochrone == null) {
+        return;
     }
     
     for (let i = 0; i < resultmarkers.length; i++) {
@@ -322,6 +323,13 @@ function search() {
         document.getElementById("choice" + i).innerHTML = "";
         document.getElementById("choiceAddress" + i).innerHTML = "";
         document.getElementById("restaurantType" + i).innerHTML = "";
+    }
+
+    let isochrone = turf.simplify(turf.polygon([users[0].isochrone]), options);
+    for (let i = 1; i < users.length; i++) {
+        if (users[i].posn != null && users[i].isochrone != null) {
+            isochrone = turf.intersect(isochrone, turf.polygon([users[i].isochrone]));
+        }
     }
 
     if (isochrone == null) {
@@ -340,7 +348,6 @@ function search() {
     }
     let results = [];
 
-    console.log(polygons);
     for (let i = 0; i < polygons.length; i++) {
         let curr = polygons[i];
         if (polygons.length != 1) curr = curr[0];
@@ -460,10 +467,13 @@ function removeUser(index) {
     }
     users[index].marker.remove();
     users.splice(index, 1);
+    document.getElementById("locationinput" + index).value = "";
+
+    search();
 }
 
 document.getElementById("removeBud1").addEventListener("click", (e) => {removeUser(1)});
-//document.getElementById("removeBud2").addEventListener("click", (e) => {removeUser(2)});
+document.getElementById("removeBud2").addEventListener("click", (e) => {removeUser(2)});
 
 function switchtabs(fromindex, toindex) {
     if (fromindex == toindex) return;
@@ -495,8 +505,6 @@ document.getElementById("tab2").addEventListener("click", (e) => {switchtabs(cur
 
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@  RESULTS STUFF
-// defining variables
-let copyA = document.getElementById("copyA");
 let tooltipContainer = document.getElementById("tooltipContainer");
 
 function copyAddress(e) {
@@ -517,61 +525,48 @@ for (let i = 0; i < copybuttons.length; i++) {
     copybuttons[i].addEventListener("click", (e) => { copyAddress(e) });
 }
 
-// back button
 let backTabs = () => {
     inputContainer.classList.remove("disappear");
     resultsContainer.classList.add("disappear");
     up.classList.remove("rotate");
     up.classList.add("upright");
     myElement.style.bottom = "-20em";
-
 }
 
-
-
 // results div up
-
 let up = document.getElementById("up");
 
 
-
-
-// hammer stuff
+// HAMMER ----------------------------------------------------------
 let myElement = document.getElementById('resultsDiv');
 let locationDiv0 = document.getElementById('input0');
 let locationDiv1 = document.getElementById('input1');
 let locationDiv2 = document.getElementById('input2');
 
-// create a simple instance
-// by default, it only adds horizontal recognizers
 let mc = new Hammer(myElement);
-
 let div0 = new Hammer(locationDiv0);
 let div1 = new Hammer(locationDiv1);
 let div2 = new Hammer(locationDiv2);
-// // let the pan gesture support all directions.
-// // this will block the vertical scrolling on a touch-device while on the element
-mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
 
+// let the pan gesture support all directions.
+// this will block the vertical scrolling on a touch-device while on the element
+mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
 div0.get('pan').set({ direction: Hammer.DIRECTION_ALL });
 div1.get('pan').set({ direction: Hammer.DIRECTION_ALL });
 div2.get('pan').set({ direction: Hammer.DIRECTION_ALL });
 
-// // listen to events...
 mc.on("panup", function (ev) {
     myElement.style.bottom = "0em";
-    console.log("HAMMER");
     up.classList.add("rotate");
     up.classList.remove("upright");
 });
+
 mc.on("pandown", function (ev) {
     myElement.style.bottom = "-20em";
-    console.log("HAMMER2");
     up.classList.remove("rotate");
     up.classList.add("upright");
-
-    // up.src="img/up.svg";
 });
+
 mc.on("panright", function (ev) {
     inputContainer.classList.remove("disappear");
     resultsContainer.classList.add("disappear");
@@ -579,8 +574,6 @@ mc.on("panright", function (ev) {
     up.classList.add("upright");
     myElement.style.bottom = "-20em";
 });
-
-
 
 div0.on("panleft", function (ev) {
     inputContainer.classList.add("disappear");
@@ -597,24 +590,7 @@ div2.on("panleft", function (ev) {
     resultsContainer.classList.remove("disappear");
 })
 
-
-
-// var myElement = document.getElementById('myElement');
-
-// // create a simple instance
-// // by default, it only adds horizontal recognizers
-// var mc = new Hammer(myElement);
-
-// // let the pan gesture support all directions.
-// // this will block the vertical scrolling on a touch-device while on the element
-// mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
-
-// // listen to events...
-// mc.on("panleft panright panup pandown tap press", function(ev) {
-//     myElement.textContent = ev.type +" gesture detected.";
-// });
-
-// ERROR GARBAGE
+// ERROR GARBAGE -------------------------------------------------------
 let errorContainer = document.getElementById("errorContainer");
 
 let errorVis = () => {
