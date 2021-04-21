@@ -1,26 +1,76 @@
 const MAPBOX_ACCESS_CODE = "pk.eyJ1IjoiaWRhdGFycyIsImEiOiJja2w5MHB2dWUwMzYyMndwZmM0djM3ZDVsIn0.T7Tr5He16zekwZXuBL9uUw";
 mapboxgl.accessToken = MAPBOX_ACCESS_CODE;
+const defaultposn = [-77.0369, 38.895];
+const usercolours = ["#314ccd", "#314ccd", "#314ccd"];
+const resultcolor = "ffffff";
+const defaulttime = 15;
+const defaulttransportation = "walking";
+const maxResults = 5;
 
-// GLOBALS --------------------------------------------------
-let posn = [-77.0369, 38.895]; //default
-let geolocation = null;
-let transportation = 'cycling';
-let minutes = 10;
-let geolocationerror = false;
-let map;
-let loaded = false;
-var marker = new mapboxgl.Marker({
-    'color': '#314ccd'
+const SICvalues = {
+    icecream: 581203,
+    allrestaurants: 581208,
+    delicatessen: 581209,
+    cafe: 581214,
+    sandwiches: 581219,
+    tearoom: 581236,
+    bar: 581301,
+    pub: 581305,
+    takeout: 581206
+}
+
+document.getElementById("pickFood").addEventListener("change", () => {
+    let value = document.getElementById("pickFood").value;
+    SICcode = SICvalues[value];
+    if (users[0].isochrone != null) search();
 });
 
-function rendermarker() {
-    marker.setLngLat({
-        lon: posn[0],
-        lat: posn[1]
+let SICcode = SICvalues.allrestaurants;
+let resultmarkers = [];
+
+// GLOBALS --------------------------------------------------
+
+const maxUsers = 3;
+let users = [new User(0)];
+let currentuser = 0;
+
+function User(index) {
+    this.index = index;
+    this.posn = defaultposn;
+    this.transportation = defaulttransportation;
+    this.minutes = defaulttime;
+    this.marker = new mapboxgl.Marker({
+        'color': usercolours[index]
+    })
+    this.loaded = false;
+    this.isochrone = null;
+
+    // DOM stuff
+    this.boxFillDriving = document.getElementById("boxFillDriving" + index);
+    this.boxFillBiking = document.getElementById("boxFillBiking" + index);
+    this.boxFillWalking = document.getElementById("boxFillWalking" + index);
+
+    this.walkingIcon = document.getElementById("walkingIcon" + index);
+    this.bikingIcon = document.getElementById("bikingIcon" + index);
+    this.drivingIcon = document.getElementById("drivingIcon" + index);
+
+    this.tab = document.getElementById("tab" + index);
+    this.form = document.getElementById("input" + index);
+}
+
+let map;
+
+let geolocation = null;
+let geolocationerror = false;
+
+function rendermarker(user) {
+    user.marker.setLngLat({
+        lon: user.posn[0],
+        lat: user.posn[1]
     }).addTo(map);
 
     map.flyTo({
-        center: posn,
+        center: user.posn,
         essential: true // this animation is considered essential with respect to prefers-reduced-motion
     });
 }
@@ -30,7 +80,7 @@ function rendermarker() {
 function onSuccess(position) {
     console.log(position);
     geolocation = [position.coords.longitude, position.coords.latitude];
-    posn = [position.coords.longitude, position.coords.latitude];
+    users[0].posn = [position.coords.longitude, position.coords.latitude];
     //document.getElementById("currentlocation").checked = true;
 
     map = new mapboxgl.Map({
@@ -39,7 +89,7 @@ function onSuccess(position) {
         center: geolocation, // Specify the starting position
         zoom: 13, // Specify the starting zoom
     });
-    rendermarker();
+    rendermarker(users[0]);
 }
 
 function onError(error) {
@@ -50,7 +100,7 @@ function onError(error) {
     map = new mapboxgl.Map({
         container: 'map', // Specify the container ID
         style: 'mapbox://styles/mapbox/streets-v11', // Specify which map style to use
-        center: posn, // Specify the starting position
+        center: defaultposn, // Specify the starting position
         zoom: 13, // Specify the starting zoom
     });
 }
@@ -66,66 +116,124 @@ navigator.geolocation.getCurrentPosition(onSuccess, onError, {
 const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/';
 
 // Create a function that sets up the Isochrone API query then makes an Ajax call
-function getIso() {
-    var query = urlBase + transportation + '/' + posn[0] + ',' + posn[1] + '?contours_minutes=' + minutes + '&polygons=true&access_token=' + mapboxgl.accessToken;
+function getIso(user) {
+    if (user.posn == null) return;
+    var query = urlBase + user.transportation + '/' + user.posn[0] + ',' + user.posn[1] + '?contours_minutes=' + user.minutes + '&polygons=true&access_token=' + mapboxgl.accessToken;
 
     $.ajax({
         method: 'GET',
         url: query
     }).done(function (data) {
         // Set the 'iso' source's data to what's returned by the API query
-        map.getSource('iso').setData(data);
-        console.log(data);
-
+        map.getSource('iso' + user.index).setData(data);
+        user.isochrone = data.features[0].geometry.coordinates[0];
+        search();
     })
+
 };
 
 // initially loads the isochrone
-function submit(e) {
-    if (loaded) return;
-    map.addSource('iso', {
-        type: 'geojson',
-        data: {
-            'type': 'FeatureCollection',
-            'features': []
-        }
-    });
-
-    map.addLayer({
-        'id': 'isoLayer',
-        'type': 'fill',
-        // Use "iso" as the data source for this layer
-        'source': 'iso',
-        'layout': {},
-        'paint': {
-            // The fill color for the layer is set to a light purple
-            'fill-color': '#5a3fc0',
-            'fill-opacity': 0.3
-        }
-    }, "poi-label");
-
+function submit() {
     // Make the API call
-    getIso();
-    loaded = true;
+    for (let i = 0; i < users.length; i++) {
+        if (!users[i].loaded) {
+            map.addSource('iso' + i, {
+                type: 'geojson',
+                data: {
+                    'type': 'FeatureCollection',
+                    'features': []
+                }
+            });
 
+            map.addLayer({
+                'id': 'isoLayer' + i,
+                'type': 'fill',
+                // Use "iso" as the data source for this layer
+                'source': 'iso' + i,
+                'layout': {},
+                'paint': {
+                    // The fill color for the layer is set to a light purple
+                    'fill-color': '#5a3fc0',
+                    'fill-opacity': 0.3
+                }
+            }, "poi-label");
 
-
-
- 
-
+            getIso(users[i]);
+            users[i].loaded = true;
+        }
+    }
 }
 
-document.getElementById("inputform").addEventListener("submit", (e) => submit(e));
+document.getElementById("inputform0").addEventListener("submit", submit);
+document.getElementById("inputform1").addEventListener("submit", submit);
+document.getElementById("inputform2").addEventListener("submit", submit);
 
 // updates the isochrone
-document.getElementById("inputform").addEventListener("change", function (e) {
-    if (e.target.name == "traveltimeinput") {
-        minutes = e.target.value;
+function update(e, userindex) {
+    let user = users[userindex];
+    if (e.target.name == "traveltimeinput" + userindex) {
+        user.minutes = e.target.value;
+    } else if (e.target.name == "transportation" + userindex) {
+        user.transportation = e.target.value;
+        if (e.target.value == "walking") {
+            user.boxFillWalking.classList.remove("inactiveBox");
+            user.walkingIcon.classList.remove("inactiveIcon")
+            user.boxFillWalking.classList.add("activeBox");
+            user.walkingIcon.classList.add("activeIcon");
 
-    } else if (e.target.name == "transportation") {
-        transportation = e.target.value;
+            //remove color from unselected buttons, add inactive class
+            user.boxFillBiking.classList.remove("activeBox");
+            user.boxFillDriving.classList.remove("activeBox");
 
-    } else if (e.target.name == "locationinput") {
+            user.bikingIcon.classList.remove("activeIcon");
+            user.drivingIcon.classList.remove("activeIcon");
+
+            user.boxFillBiking.classList.add("inactiveBox");
+            user.boxFillDriving.classList.add("inactiveBox");
+
+            user.bikingIcon.classList.add("inactiveIcon");
+            user.drivingIcon.classList.add("inactiveIcon");
+            
+        } else if (e.target.value == "cycling") {
+            // add color to selected button
+            user.boxFillBiking.classList.remove("inactiveBox");
+            user.bikingIcon.classList.remove("inactiveIcon")
+            user.boxFillBiking.classList.add("activeBox");
+            user.bikingIcon.classList.add("activeIcon");
+
+            //remove color from unselected buttons, add inactive class
+            user.boxFillDriving.classList.remove("activeBox");
+            user.boxFillWalking.classList.remove("activeBox");
+
+            user.drivingIcon.classList.remove("activeIcon");
+            user.walkingIcon.classList.remove("activeIcon");
+
+            user.boxFillDriving.classList.add("inactiveBox");
+            user.boxFillWalking.classList.add("inactiveBox");
+
+            user.drivingIcon.classList.add("inactiveIcon");
+            user.walkingIcon.classList.add("inactiveIcon");
+        } else if (e.target.value == "driving") {
+            // add color to selected button
+            user.boxFillDriving.classList.remove("inactiveBox");
+            user.drivingIcon.classList.remove("inactiveIcon")
+            user.boxFillDriving.classList.add("activeBox");
+            user.drivingIcon.classList.add("activeIcon");
+
+            //remove color from unselected buttons, add inactive class
+            user.boxFillBiking.classList.remove("activeBox");
+            user.boxFillWalking.classList.remove("activeBox");
+
+            user.bikingIcon.classList.remove("activeIcon");
+            user.walkingIcon.classList.remove("activeIcon");
+
+            user.boxFillBiking.classList.add("inactiveBox");
+            user.boxFillWalking.classList.add("inactiveBox");
+
+            user.bikingIcon.classList.add("inactiveIcon");
+            user.walkingIcon.classList.add("inactiveIcon");
+        }
+    } else if (e.target.name == "locationinput" + userindex) {
         if (e.target.value == "") { //use geolocation
             if (geolocationerror) {
                 console.log("how did I end up here");
@@ -133,237 +241,132 @@ document.getElementById("inputform").addEventListener("change", function (e) {
             }
 
         } else { // geocode
+            if (e.target.value == "") return;
             let query = e.target.value.replace(" ", "%20");
 
-            makeRequest("https://api.mapbox.com/geocoding/v5/mapbox.places/" + query + ".json?proximity=" + posn[0] + "," + posn[1] + "&access_token=" + MAPBOX_ACCESS_CODE);
+            makeRequest("https://api.mapbox.com/geocoding/v5/mapbox.places/" + query + ".json?proximity=" + user.posn[0] + "," + user.posn[1] + "&access_token=" + MAPBOX_ACCESS_CODE, user);
         }
     }
 
-    if (loaded) getIso();
-})
+    if (user.loaded) getIso(user);
+}
+document.getElementById("inputform0").addEventListener("change", (e) => {update(e, 0)});
+document.getElementById("inputform1").addEventListener("change", (e) => {update(e, 1)});
+document.getElementById("inputform2").addEventListener("change", (e) => {update(e, 2)});
 
 
 // GEOCODE
-function makeRequest(url) {
+function makeRequest(url, user) {
     httpRequest = new XMLHttpRequest();
 
     if (!httpRequest) {
         alert('Giving up :( Cannot create an XMLHTTP instance');
         return false;
     }
-    httpRequest.onreadystatechange = updatePosn;
+    httpRequest.onreadystatechange = () => { updatePosn(user) };
     httpRequest.open('GET', url);
     httpRequest.send();
 }
 
-function updatePosn() {
+function updatePosn(user) {
     if (httpRequest.readyState === XMLHttpRequest.DONE) {
         if (httpRequest.status === 200) {
             //alert(httpRequest.responseText);
             let result = JSON.parse(httpRequest.responseText);
 
-            posn = result.features[0].center;
+            user.posn = result.features[0].center;
 
-            rendermarker();
-            if (loaded) getIso();
+            rendermarker(user);
+            submit();
         } else {
             alert('There was a problem with the request.');
         }
     }
 }
 
+// SEARCH
 
+function search() {
+    let resultdivs = document.getElementsByClassName("resultsdiv");
+    let options = {tolerance: 0.01, highQuality: false};
+    let isochrone = turf.simplify(turf.polygon([users[0].isochrone]), options);
+    for (let i = 1; i < users.length; i++) {
+        isochrone = turf.intersect(isochrone, turf.polygon([users[i].isochrone]));
+    }
 
+    if (isochrone == null) {
+        // error handling
+        return;
+    }
+    
+    for (let i = 0; i < resultmarkers.length; i++) {
+        resultmarkers[i].remove();
+    }
 
+    for (let i = 0; i < resultdivs.length; i++) {
+        resultdivs[i].style.display = "";
+        document.getElementById("choice" + i).innerHTML = "";
+        document.getElementById("choiceAddress" + i).innerHTML = "";
+        document.getElementById("restaurantType" + i).innerHTML = "";
+    }
 
+    let polygons = isochrone.geometry.coordinates;
+    let results = [];
 
+    console.log(polygons);
+    for (let i = 0; i < polygons.length; i++) {
+        let curr = polygons[i];
+        let string = "";
+        for (let j = 0; j < curr.length; j++) {
+            if (j != 0) string += ",";
+            string += curr[j][1] + "," + curr[j][0];
+        }
+        const searchbase = "http://www.mapquestapi.com/search/v2/polygon?key=GviXRAtG1HuP7jTZI5WwPpND9Gu7UHfj&ambiguities=ignore&"
+        var query = searchbase + "polygon=" + string + "&maxMatches=" + maxResults + "&hostedData=mqap.ntpois|group_sic_code=?|" + SICcode;
 
+        $.ajax({
+            method: 'GET',
+            url: query,
+            dataType: 'jsonp',
+        }).done(function (data) {
+            if (data.resultsCount == 0 || data.info.statusCode != 0) {
+                // ERROR HANDLING
+            } else {
+                console.log(data);
+                results = results.concat(data.searchResults);
+                console.log(results);
+            }
 
+            if (i == polygons.length - 1) {
+                let i = 0;
+                while (i < results.length) {
+                    let curr2 = results[i];
+                    document.getElementById("choice" + i).innerHTML = curr2.name;
+                    document.getElementById("choiceAddress" + i).innerHTML = curr2.fields.address;
+                    document.getElementById("restaurantType" + i).innerHTML = curr2.fields.group_sic_code_name;
+
+                    // Set options
+                    resultmarkers.push(new mapboxgl.Marker({
+                        color: "#FFFFFF",
+                    }).setLngLat([curr2.fields.disp_lng, curr2.fields.disp_lat])
+                        .addTo(map));
+
+                    i++;
+                }
+                while (i < resultdivs.length) {
+                    resultdivs[i].style.display = "none";
+                    i++;
+                }
+            }
+        });
+    }
+}
 
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    VONNE CODE    @@@@@@@@@@@@@@@@
 
 // defining containers for div switching
 let inputContainer = document.getElementById("inputContainer");
 let resultsContainer = document.getElementById("resultsContainer");
-
-
-
-
-
-// defining variables for buttons for modes of transportation
-let boxFillDriving = document.getElementById("boxFillDriving");
-let boxFillBiking = document.getElementById("boxFillBiking");
-let boxFillWalking = document.getElementById("boxFillWalking");
-
-let boxFillDriving2 = document.getElementById("boxFillDriving2");
-let boxFillBiking2 = document.getElementById("boxFillBiking2");
-let boxFillWalking2 = document.getElementById("boxFillWalking2");
-
-
-let walkingIcon = document.getElementById("walkingIcon");
-let bikingIcon = document.getElementById("bikingIcon");
-let drivingIcon = document.getElementById("drivingIcon");
-
-let walkingIcon2 = document.getElementById("walkingIcon2");
-let bikingIcon2 = document.getElementById("bikingIcon2");
-let drivingIcon2 = document.getElementById("drivingIcon2");
-
-
-
-
-
-// WALKING SELECTED
-let walkingSelect = () => {
-    {
-        // add color to selected button
-        boxFillWalking.classList.remove("inactiveBox");
-        walkingIcon.classList.remove("inactiveIcon")
-        boxFillWalking.classList.add("activeBox");
-        walkingIcon.classList.add("activeIcon");
-
-
-        //remove color from unselected buttons, add inactive class
-        boxFillBiking.classList.remove("activeBox");
-        boxFillDriving.classList.remove("activeBox");
-
-        bikingIcon.classList.remove("activeIcon");
-        drivingIcon.classList.remove("activeIcon");
-
-        boxFillBiking.classList.add("inactiveBox");
-        boxFillDriving.classList.add("inactiveBox");
-
-        bikingIcon.classList.add("inactiveIcon");
-        drivingIcon.classList.add("inactiveIcon");
-
-    }
-}
-
-let walkingSelect2 = () => {
-    {
-        // add color to selected button
-        boxFillWalking2.classList.remove("inactiveBox");
-        walkingIcon2.classList.remove("inactiveIcon")
-        boxFillWalking2.classList.add("activeBox");
-        walkingIcon2.classList.add("activeIcon");
-
-
-        //remove color from unselected buttons, add inactive class
-        boxFillBiking2.classList.remove("activeBox");
-        boxFillDriving2.classList.remove("activeBox");
-
-        bikingIcon2.classList.remove("activeIcon");
-        drivingIcon2.classList.remove("activeIcon");
-
-        boxFillBiking2.classList.add("inactiveBox");
-        boxFillDriving2.classList.add("inactiveBox");
-
-        bikingIcon2.classList.add("inactiveIcon");
-        drivingIcon2.classList.add("inactiveIcon");
-
-    }
-}
-// BIKING SELECTED
-let bikingSelect = () => {
-    {
-        // add color to selected button
-        boxFillBiking.classList.remove("inactiveBox");
-        bikingIcon.classList.remove("inactiveIcon")
-        boxFillBiking.classList.add("activeBox");
-        bikingIcon.classList.add("activeIcon");
-
-
-        //remove color from unselected buttons, add inactive class
-        boxFillDriving.classList.remove("activeBox");
-        boxFillWalking.classList.remove("activeBox");
-
-        drivingIcon.classList.remove("activeIcon");
-        walkingIcon.classList.remove("activeIcon");
-
-        boxFillDriving.classList.add("inactiveBox");
-        boxFillWalking.classList.add("inactiveBox");
-
-        drivingIcon.classList.add("inactiveIcon");
-        walkingIcon.classList.add("inactiveIcon");
-
-    }
-}
-let bikingSelect2 = () => {
-    {
-        // add color to selected button
-        boxFillBiking2.classList.remove("inactiveBox");
-        bikingIcon2.classList.remove("inactiveIcon")
-        boxFillBiking2.classList.add("activeBox");
-        bikingIcon2.classList.add("activeIcon");
-
-
-        //remove color from unselected buttons, add inactive class
-        boxFillDriving2.classList.remove("activeBox");
-        boxFillWalking2.classList.remove("activeBox");
-
-        drivingIcon2.classList.remove("activeIcon");
-        walkingIcon2.classList.remove("activeIcon");
-
-        boxFillDriving2.classList.add("inactiveBox");
-        boxFillWalking2.classList.add("inactiveBox");
-
-        drivingIcon2.classList.add("inactiveIcon");
-        walkingIcon2.classList.add("inactiveIcon");
-
-    }
-}
-// DRIVING SELECTED
-let drivingSelect = () => {
-    {
-        // add color to selected button
-        boxFillDriving.classList.remove("inactiveBox");
-        drivingIcon.classList.remove("inactiveIcon")
-        boxFillDriving.classList.add("activeBox");
-        drivingIcon.classList.add("activeIcon");
-
-
-        //remove color from unselected buttons, add inactive class
-        boxFillBiking.classList.remove("activeBox");
-        boxFillWalking.classList.remove("activeBox");
-
-        bikingIcon.classList.remove("activeIcon");
-        walkingIcon.classList.remove("activeIcon");
-
-        boxFillBiking.classList.add("inactiveBox");
-        boxFillWalking.classList.add("inactiveBox");
-
-        bikingIcon.classList.add("inactiveIcon");
-        walkingIcon.classList.add("inactiveIcon");
-
-    }
-}
-
-let drivingSelect2 = () => {
-    {
-        // add color to selected button
-        boxFillDriving2.classList.remove("inactiveBox");
-        drivingIcon2.classList.remove("inactiveIcon")
-        boxFillDriving2.classList.add("activeBox");
-        drivingIcon2.classList.add("activeIcon");
-
-
-        //remove color from unselected buttons, add inactive class
-        boxFillBiking2.classList.remove("activeBox");
-        boxFillWalking2.classList.remove("activeBox");
-
-        bikingIcon2.classList.remove("activeIcon");
-        walkingIcon2.classList.remove("activeIcon");
-
-        boxFillBiking2.classList.add("inactiveBox");
-        boxFillWalking2.classList.add("inactiveBox");
-
-        bikingIcon2.classList.add("inactiveIcon");
-        walkingIcon2.classList.add("inactiveIcon");
-
-    }
-}
-
-
-
 
 // defining buddy stuff
 let addPic = document.getElementById("addPic"); // pic in bud tab 1
@@ -380,118 +383,71 @@ let input2 = document.getElementById("input2"); // bottom div, bud 1
 
 // switching divs
 // your location input
-let traveltimeinput=document.getElementById("traveltimeinput");
+let traveltimeinput = document.getElementById("traveltimeinput");
 let resultsDivOn = () => {
-       // @@@@@ VONNE CODE
+    // @@@@@ VONNE CODE
     // switching visibility of divs
-if (traveltimeinput.value >= 1){
-    inputContainer.classList.add("disappear");
-    resultsContainer.classList.remove("disappear");
-    console.log("laksd");
+    if (traveltimeinput.value >= 1) {
+        inputContainer.classList.add("disappear");
+        resultsContainer.classList.remove("disappear");
+    }
+}
 
-}}
-// buddy1 input
-let traveltimeinput2=document.getElementById("traveltimeinput2");
-let resultsDivOn2 = () => {
-       // @@@@@ VONNE CODE
-    // switching visibility of divs
-if (traveltimeinput2.value >= 1){
-    inputContainer.classList.add("disappear");
-    resultsContainer.classList.remove("disappear");
-    console.log("laksd");
+function addUser() {
+    let newuserindex = users.length;
+    if (newuserindex >= maxUsers) {
+        // error handling
+        return;
+    }
+    users.push(new User(newuserindex));
 
-}}
+    users[newuserindex].tab.classList.remove("disappear");
+    switchtabs(currentuser, newuserindex);
+}
 
+document.getElementById("addBud").addEventListener("click", addUser);
 
+function removeUser(index) {
+    switchtabs(index, 0);
+    users[index].tab.classList.add("disappear");
+    if (users[index].isochrone != null) {
+        map.removeLayer("isoLayer" + index);
+        map.removeSource("iso" + index);
+    }
+    users[index].marker.remove();
+    users.splice(index, 1);
+}
 
-// @@@@@@@@@@@@@@@ adding buddy
-// 1st buddy tab
-let addBuddy1 = () => {
+document.getElementById("removeBud1").addEventListener("click", (e) => {removeUser(1)});
+//document.getElementById("removeBud2").addEventListener("click", (e) => {removeUser(2)});
 
-    //BUDDY TAB 1 appear and make active
-    
-    buddy1Tab.classList.add("activeTab");
-    buddy1Tab.classList.remove("inactiveTab");
-    buddy1Tab.classList.remove("disappear");
+function switchtabs(fromindex, toindex) {
+    if (fromindex == toindex) return;
+    let from = users[fromindex];
+    let to = users[toindex];
+
+    to.tab.classList.add("activeTab");
+    to.tab.classList.remove("inactiveTab");
 
     //deactivate mylocation tab
-    myLocationTab.classList.remove("activeTab");
-    myLocationTab.classList.add("inactiveTab");
+    from.tab.classList.remove("activeTab");
+    from.tab.classList.add("inactiveTab");
 
-    // switch form to bud's form
-    input2.classList.remove("disappear");
-    input.classList.add("disappear");
+    //switch form to bud's form
+    to.form.classList.remove("disappear");
+    from.form.classList.add("disappear");
 
-    // addPic.classList.add("disappear");
-    // bud1Text.innerHTML = "Buddy 1";
-    // removeBud1.classList.remove("disappear"); // toggles x button 
-    // addBud1.classList.add("activeTab");
-    // addBud1.classList.remove("inactiveTab");
-    // myLocationTab.classList.remove("activeTab");
-    // myLocationTab.classList.add("inactiveTab");
+    map.flyTo({
+        center: to.posn,
+        essential: true // this animation is considered essential with respect to prefers-reduced-motion
+    });
 
-
+    currentuser = toindex;
 }
 
-// @@@@@@@@@@@@@ navigating buddy tabs
-// 1st buddy tab
-let budSwitch1 = () => {
-
-    //BUDDY TAB 1 appear and make active
-    
-    buddy1Tab.classList.add("activeTab");
-    buddy1Tab.classList.remove("inactiveTab");
-
-      //deactivate mylocation tab
-      myLocationTab.classList.remove("activeTab");
-      myLocationTab.classList.add("inactiveTab");
-
-      console.log("shit");
-
-      //switch form to bud's form
-      input2.classList.remove("disappear");
-      input.classList.add("disappear");
-}
-
-// @@@@@@@@@@@@@ removing buddy
-// 1st buddy tab
-
-    //BUDDY TAB 1 disappear
-    let removeBuddy1 = () => {
-    buddy1Tab.classList.add("disappear");
-    buddy1Tab.classList.remove("activeTab");
-    buddy1Tab.classList.add("inactiveTab");
-
-    //activate mylocation tab
-    myLocationTab.classList.remove("inactiveTab");
-    myLocationTab.classList.add("activeTab");
-
-      //switch form to mylocation
-      input2.classList.add("disappear");
-      input.classList.remove("disappear");
-  
-
- 
-}
-
-
-
-// my location tab 
-let myTab = () => {
-      //activate mylocation tab
-      myLocationTab.classList.remove("inactiveTab");
-      myLocationTab.classList.add("activeTab");
-
-      //lower other tabs
-      buddy1Tab.classList.remove("activeTab");
-      buddy1Tab.classList.add("inactiveTab");
-
-    //switch form to mylocation form
-    input2.classList.add("disappear");
-    input.classList.remove("disappear");
-
-}
-
+document.getElementById("tab0").addEventListener("click", (e) => {switchtabs(currentuser, 0)});
+document.getElementById("tab1").addEventListener("click", (e) => {switchtabs(currentuser, 1)});
+//document.getElementById("tab2").addEventListener("click", (e) => {switchtabs(currentuser, 2)});
 
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@  RESULTS STUFF
@@ -499,62 +455,21 @@ let myTab = () => {
 let copyA = document.getElementById("copyA");
 let tooltipContainer = document.getElementById("tooltipContainer");
 
-
-
-
-
-// COPYING NAME AND ADDRESS
-let copyAddressA = () => {
+function copyAddress(e) {
     let aux = document.createElement("input");
-aux.setAttribute("value", document.getElementById("choiceA").innerHTML + " - " + document.getElementById("choiceAddressA").innerHTML);
-document.body.appendChild(aux);
-aux.select();
-document.execCommand("copy");
-document.body.removeChild(aux)
-tooltipContainer.classList.remove("disappear");
-tooltipContainer.classList.add("appear");
-console.log("YAAAAA");
-// setTimeout(function(){
-//     tooltipContainer.classList.remove("appear");
-//     tooltipContainer.classList.add("disappear");
-// })
-
+    let index = e.target.dataset.resultindex;
+    aux.setAttribute("value", document.getElementById("choice" + index).innerHTML + " - " + document.getElementById("choiceAddress" + index).innerHTML);
+    document.body.appendChild(aux);
+    aux.select();
+    document.execCommand("copy");
+    document.body.removeChild(aux)
+    tooltipContainer.classList.remove("disappear");
+    tooltipContainer.classList.add("appear");
 }
 
-let copyAddressB = () => {
-    let aux = document.createElement("input");
-aux.setAttribute("value", document.getElementById("choiceB").innerHTML + " - " + document.getElementById("choiceAddressB").innerHTML);
-document.body.appendChild(aux);
-aux.select();
-document.execCommand("copy");
-document.body.removeChild(aux)
-}
-
-let copyAddressC = () => {
-    let aux = document.createElement("input");
-aux.setAttribute("value", document.getElementById("choiceC").innerHTML + " - " + document.getElementById("choiceAddressC").innerHTML);
-document.body.appendChild(aux);
-aux.select();
-document.execCommand("copy");
-document.body.removeChild(aux)
-}
-
-let copyAddressD = () => {
-    let aux = document.createElement("input");
-aux.setAttribute("value", document.getElementById("choiceD").innerHTML + " - " + document.getElementById("choiceAddressD").innerHTML);
-document.body.appendChild(aux);
-aux.select();
-document.execCommand("copy");
-document.body.removeChild(aux)
-}
-
-let copyAddressE = () => {
-    let aux = document.createElement("input");
-aux.setAttribute("value", document.getElementById("choiceE").innerHTML + " - " + document.getElementById("choiceAddressE").innerHTML);
-document.body.appendChild(aux);
-aux.select();
-document.execCommand("copy");
-document.body.removeChild(aux)
+let copybuttons = document.getElementsByClassName("linkIcon");
+for (let i = 0; i < copybuttons.length; i++) {
+    copybuttons[i].addEventListener("click", (e) => { copyAddress(e) });
 }
 
 // back button
@@ -564,14 +479,14 @@ let backTabs = () => {
     up.classList.remove("rotate");
     up.classList.add("upright");
     myElement.style.bottom = "-20em";
-    
+
 }
 
 
 
 // results div up
 
-let up=document.getElementById("up");
+let up = document.getElementById("up");
 
 
 
@@ -588,14 +503,14 @@ let mc = new Hammer(myElement);
 mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
 
 // // listen to events...
-mc.on("panup", function(ev) {
-    myElement.style.bottom ="0em";
+mc.on("panup", function (ev) {
+    myElement.style.bottom = "0em";
     console.log("HAMMER");
     up.classList.add("rotate");
     up.classList.remove("upright");
 });
-mc.on("pandown", function(ev) {
-    myElement.style.bottom ="-20em";
+mc.on("pandown", function (ev) {
+    myElement.style.bottom = "-20em";
     console.log("HAMMER2");
     up.classList.remove("rotate");
     up.classList.add("upright");

@@ -3,7 +3,7 @@
 
 <head>
   <meta charset='utf-8' />
-  <title>Get started with the Isochrone API</title>
+  <title>Feasty</title>
   <meta name='viewport' content='width=device-width, initial-scale=1' />
   <script src="https://hammerjs.github.io/dist/hammer.js"></script>
   <!-- Import Mapbox GL JS  -->
@@ -20,11 +20,12 @@
   <link rel='stylesheet'
     href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css'
     type='text/css' />
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
 
   <link href="css/design.css" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/pbj1mma.css">
 
-  
+
 </head>
 
 <body>
@@ -40,8 +41,11 @@
     <div id="picker" class="span4">
 
       <select id="pickFood">
-        <option>restaurant</option>
-        <option>cafe</option>
+        <option value="allrestaurants">restaurant</option>
+        <option value="cafe">cafe</option>
+        <option value="bar">bar</option>
+        <option value="sandwiches">sandwich place</option>
+        <option value="takeout">take-out</option>
       </select>
 
     </div>
@@ -54,27 +58,27 @@
   <div id='map'></div>
 
 
-  <div id="inputContainer"> 
+  <div id="inputContainer">
 
-  <!-- tabs for switching the person -->
-  <a href="#">
-    <div id="myLocationTab" class="activeTab" onclick="myTab();"> <span id="myLocationText">My Location</span></div>
-  </a>
+    <!-- tabs for switching the person -->
+    <a href="#">
+      <div id="tab0" class="activeTab" data-userindex="0"> <span id="myLocationText">My Location</span></div>
+    </a>
 
 
-  <a href="#">
-    <div id="buddy1Tab" class="inactiveTab disappear">
-      <span onclick="budSwitch1()" class="buddyText"> Buddy 1 &nbsp;</span>
-  </a>
-  <object><a id='removeBud1' onclick='removeBuddy1();' width="15px" height="15px"><img src="img/removeBud.svg"></object>
+    <a href="#">
+      <div id="tab1" class="inactiveTab disappear" data-userindex="1">
+        <span class="buddyText"> Buddy 1 &nbsp;</span>
+    </a>
+    <object><a id='removeBud1' width="15px" height="15px"><img src="img/removeBud.svg"></object>
   </div></a>
   </a>
 
 
   <!-- add person tab -->
   <a href="#">
-    <div id="addBud1" class="inactiveTab" onclick="addBuddy1();">
-      <span id="bud1Text"></span>
+    <div id="addBud" class="inactiveTab">
+      <span id="budText"></span>
 
 
       <img id="addPic" src="img/person-add.svg">
@@ -85,27 +89,30 @@
 
   <!--@@@@ input form -->
 
-  <div id="input">
-    <form id="inputform" onsubmit="return false">
+  <div id="input0">
+    <form id="inputform0" onsubmit="return false" data-userindex="0">
       <div class="locationAndPin">
 
 
         <img id="formPin" src="img/mapMarker.svg">
 
 
-        <input type="text" placeholder="Use current location..." id="locationinput" name="locationinput"></div><br>
+        <input type="text" placeholder="Use current location..." id="locationinput0" name="locationinput0"
+          data-userindex="0">
+      </div><br>
 
-      <label for="traveltime">How much commuting time do you have?</label><br>
-      <input type="number" min="1" max="60" id="traveltimeinput" value="15" name="traveltimeinput"> Minutes<br>
+      <label for="traveltimeinput0">How much commuting time do you have?</label><br>
+      <input type="number" min="1" max="60" id="traveltimeinput" value="15" name="traveltimeinput0" data-userindex="0">
+      Minutes<br>
 
 
-      <label for="walking" onclick="walkingSelect();">
-        <input type="radio" name="transportation" value="walking" id="walking" checked>
+      <label for="walking0" id="walkinglabel0" data-userindex="0">
+        <input type="radio" name="transportation0" value="walking" id="walking0" checked data-userindex="0">
         <svg xmlns="http://www.w3.org/2000/svg" width="35" height="36" viewBox="0 0 35 36">
 
           <g id="Group_31" data-name="Group 31" transform="translate(0.026 -0.086)">
 
-            <g id="boxFillWalking" class="activeBox" data-name="Path 13" transform="translate(-0.026 0.086)"
+            <g id="boxFillWalking0" class="activeBox" data-name="Path 13" transform="translate(-0.026 0.086)"
               fill="#fff">
               <path
                 d="M 26 35.5 L 9 35.5 C 4.313079833984375 35.5 0.5 31.68692016601563 0.5 27 L 0.5 9 C 0.5 4.313079833984375 4.313079833984375 0.5 9 0.5 L 26 0.5 C 30.68692016601563 0.5 34.5 4.313079833984375 34.5 9 L 34.5 27 C 34.5 31.68692016601563 30.68692016601563 35.5 26 35.5 Z"
@@ -115,7 +122,7 @@
                 stroke="none" fill="#e2e2e2" />
             </g>
 
-            <path id="walkingIcon" class="activeIcon" data-name="Icon awesome-walking"
+            <path id="walkingIcon0" class="activeIcon" data-name="Icon awesome-walking"
               d="M8.512,3.928A1.964,1.964,0,1,0,6.548,1.964,1.965,1.965,0,0,0,8.512,3.928Zm3.867,6.1-.953-.483-.4-1.2A4.461,4.461,0,0,0,6.846,5.237,9,9,0,0,0,3.029,6.269,3.9,3.9,0,0,0,1,8.159l-.274.556A1.314,1.314,0,0,0,1.3,10.471a1.292,1.292,0,0,0,1.739-.585l.274-.556A1.3,1.3,0,0,1,3.99,8.7l1.1-.442-.622,2.484a2.628,2.628,0,0,0,.61,2.406l2.451,2.676a2.641,2.641,0,0,1,.61,1.133l.749,3a1.309,1.309,0,1,0,2.541-.634l-.908-3.642a2.618,2.618,0,0,0-.61-1.133L8.045,12.513l.7-2.811.225.675a2.61,2.61,0,0,0,1.3,1.514l.953.483a1.292,1.292,0,0,0,1.739-.585,1.325,1.325,0,0,0-.585-1.759ZM3.012,15.786a2.539,2.539,0,0,1-.581.88L.385,18.716a1.309,1.309,0,1,0,1.849,1.854l2.431-2.431a2.66,2.66,0,0,0,.581-.88L5.8,15.876c-2.263-2.467-1.584-1.71-1.94-2.2l-.847,2.107Z"
               transform="translate(11.055 5.955)" fill="#707070" />
           </g>
@@ -127,38 +134,38 @@
 
 
 
-      <label for="cycling" onclick="bikingSelect();">
-        <input type="radio" name="transportation" value="cycling" id="cycling">
+      <label for="cycling0">
+        <input type="radio" name="transportation0" value="cycling" id="cycling0" data-userindex="0">
         <svg xmlns="http://www.w3.org/2000/svg" width="35" height="36" viewBox="0 0 35 36">
           <g id="Group_32" data-name="Group 32" transform="translate(-0.021 -0.086)">
 
-            <g id="boxFillBiking" class="inactiveBox" data-name="Rectangle 10" transform="translate(0.021 0.086)"
+            <g id="boxFillBiking0" class="inactiveBox" data-name="Rectangle 10" transform="translate(0.021 0.086)"
               fill="#fff" stroke="#e1e1e1" stroke-width="1">
               <rect width="35" height="36" rx="9" stroke="none" />
               <rect x="0.5" y="0.5" width="34" height="35" rx="8.5" fill="none" />
             </g>
 
-            <path id="bikingIcon" class="inactiveIcon" data-name="Icon awesome-biking"
+            <path id="bikingIcon0" class="inactiveIcon" data-name="Icon awesome-biking"
               d="M16.367,3.928A1.964,1.964,0,1,0,14.4,1.964,1.964,1.964,0,0,0,16.367,3.928ZM16.2,8.879a1.305,1.305,0,0,0,.818.286h2.619a1.309,1.309,0,0,0,0-2.619h-2.16L14.567,4.215a1.307,1.307,0,0,0-1.67.028L8.314,8.17a1.309,1.309,0,0,0,.126,2.084l3.344,2.231v4.537a1.309,1.309,0,0,0,2.619,0V11.784A1.309,1.309,0,0,0,13.82,10.7L12.128,9.567l2.383-2.043Zm4.746,1.6a5.237,5.237,0,1,0,5.237,5.237A5.237,5.237,0,0,0,20.95,10.475Zm0,7.856a2.619,2.619,0,1,1,2.619-2.619A2.619,2.619,0,0,1,20.95,18.331ZM5.237,10.475a5.237,5.237,0,1,0,5.237,5.237A5.237,5.237,0,0,0,5.237,10.475Zm0,7.856a2.619,2.619,0,1,1,2.619-2.619A2.619,2.619,0,0,1,5.237,18.331Z"
-              transform="translate(4.651 5.955)" fill="#707070" />
+              transform="translate(4.651 5.955)" fill="#707070" /> 
           </g>
         </svg>
       </label>
 
 
 
-      <label for="driving" onclick="drivingSelect();">
-        <input type="radio" name="transportation" value="driving" id="driving">
+      <label for="driving0">
+        <input type="radio" name="transportation0" value="driving" id="driving0" data-userindex="0">
         <svg xmlns="http://www.w3.org/2000/svg" width="35" height="36" viewBox="0 0 35 36">
 
 
           <g id="Group_33" data-name="Group 33" transform="translate(-0.068 -0.086)">
-            <g id="boxFillDriving" class="inactiveBox" data-name="Rectangle 11" transform="translate(0.068 0.086)"
+            <g id="boxFillDriving0" class="inactiveBox" data-name="Rectangle 11" transform="translate(0.068 0.086)"
               fill="#fff" stroke="#e1e1e1" stroke-width="1">
               <rect width="35" height="36" rx="9" stroke="none" />
               <rect x="0.5" y="0.5" width="34" height="35" rx="8.5" fill="none" />
             </g>
-            <path id="drivingIcon" class="inactiveIcon" data-name="Icon awesome-car-side"
+            <path id="drivingIcon0" class="inactiveIcon" data-name="Icon awesome-car-side"
               d="M22.259,8.8H21.6L17.154,3.233a2.62,2.62,0,0,0-2.045-.983H6.356A2.618,2.618,0,0,0,3.924,3.9L1.964,8.889A2.613,2.613,0,0,0,0,11.416V16a.655.655,0,0,0,.655.655H2.619a3.928,3.928,0,1,0,7.856,0h5.237a3.928,3.928,0,1,0,7.856,0h1.964A.655.655,0,0,0,26.187,16V12.725A3.928,3.928,0,0,0,22.259,8.8ZM6.547,18.617a1.964,1.964,0,1,1,1.964-1.964A1.966,1.966,0,0,1,6.547,18.617ZM9.493,8.8H4.785L6.356,4.869H9.493Zm1.964,0V4.869h3.652L18.251,8.8Zm8.184,9.82A1.964,1.964,0,1,1,21.6,16.653,1.966,1.966,0,0,1,19.641,18.617Z"
               transform="translate(4.781 4.869)" fill="#707070" />
           </g>
@@ -171,23 +178,110 @@
   </div>
 
 
-  <!--@@@@@ input form 2 -->
-  <div id="input2" class="disappear">
-    <form id="inputform2" onsubmit="return false">
+  <div id="input1" class="disappear tab">
+    <form id="inputform1" onsubmit="return false" data-userindex="1">
       <div class="locationAndPin">
 
 
         <img id="formPin" src="img/mapMarker-bud1.svg">
 
 
-        <input type="text" placeholder="Use current location..." id="locationinput2" name="locationinput2"></div><br>
+        <input type="text" placeholder="Use current location..." id="locationinput1" name="locationinput1">
+      </div><br>
 
-      <label for="traveltime2">How much commuting time do they have?</label><br>
+      <label for="traveltime1">How much commuting time do they have?</label><br>
+      <input type="number" min="1" max="60" id="traveltimeinput1" value="15" name="traveltimeinput1"> Minutes<br>
+
+
+      <label for="walking1">
+        <input type="radio" name="transportation1" value="walking" id="walking1" checked>
+        <svg xmlns="http://www.w3.org/2000/svg" width="35" height="36" viewBox="0 0 35 36">
+
+          <g id="Group_31" data-name="Group 31" transform="translate(0.026 -0.086)">
+
+            <g id="boxFillWalking1" class="activeBox" data-name="Path 13" transform="translate(-0.026 0.086)"
+              fill="#fff">
+              <path
+                d="M 26 35.5 L 9 35.5 C 4.313079833984375 35.5 0.5 31.68692016601563 0.5 27 L 0.5 9 C 0.5 4.313079833984375 4.313079833984375 0.5 9 0.5 L 26 0.5 C 30.68692016601563 0.5 34.5 4.313079833984375 34.5 9 L 34.5 27 C 34.5 31.68692016601563 30.68692016601563 35.5 26 35.5 Z"
+                stroke="none" />
+              <path
+                d="M 9 1 C 4.588790893554688 1 1 4.588790893554688 1 9 L 1 27 C 1 31.41120910644531 4.588790893554688 35 9 35 L 26 35 C 30.41120910644531 35 34 31.41120910644531 34 27 L 34 9 C 34 4.588790893554688 30.41120910644531 1 26 1 L 9 1 M 9 0 L 26 0 C 30.97056007385254 0 35 4.029439926147461 35 9 L 35 27 C 35 31.97056007385254 30.97056007385254 36 26 36 L 9 36 C 4.029439926147461 36 0 31.97056007385254 0 27 L 0 9 C 0 4.029439926147461 4.029439926147461 0 9 0 Z"
+                stroke="none" fill="#e2e2e2" />
+            </g>
+
+            <path id="walkingIcon1" class="activeIcon" data-name="Icon awesome-walking"
+              d="M8.512,3.928A1.964,1.964,0,1,0,6.548,1.964,1.965,1.965,0,0,0,8.512,3.928Zm3.867,6.1-.953-.483-.4-1.2A4.461,4.461,0,0,0,6.846,5.237,9,9,0,0,0,3.029,6.269,3.9,3.9,0,0,0,1,8.159l-.274.556A1.314,1.314,0,0,0,1.3,10.471a1.292,1.292,0,0,0,1.739-.585l.274-.556A1.3,1.3,0,0,1,3.99,8.7l1.1-.442-.622,2.484a2.628,2.628,0,0,0,.61,2.406l2.451,2.676a2.641,2.641,0,0,1,.61,1.133l.749,3a1.309,1.309,0,1,0,2.541-.634l-.908-3.642a2.618,2.618,0,0,0-.61-1.133L8.045,12.513l.7-2.811.225.675a2.61,2.61,0,0,0,1.3,1.514l.953.483a1.292,1.292,0,0,0,1.739-.585,1.325,1.325,0,0,0-.585-1.759ZM3.012,15.786a2.539,2.539,0,0,1-.581.88L.385,18.716a1.309,1.309,0,1,0,1.849,1.854l2.431-2.431a2.66,2.66,0,0,0,.581-.88L5.8,15.876c-2.263-2.467-1.584-1.71-1.94-2.2l-.847,2.107Z"
+              transform="translate(11.055 5.955)" fill="#707070" />
+          </g>
+
+        </svg>
+
+      </label>
+
+
+
+
+      <label for="cycling1">
+        <input type="radio" name="transportation1" value="cycling" id="cycling1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="35" height="36" viewBox="0 0 35 36">
+          <g id="Group_32" data-name="Group 32" transform="translate(-0.021 -0.086)">
+
+            <g id="boxFillBiking1" class="inactiveBox" data-name="Rectangle 10" transform="translate(0.021 0.086)"
+              fill="#fff" stroke="#e1e1e1" stroke-width="1">
+              <rect width="35" height="36" rx="9" stroke="none" />
+              <rect x="0.5" y="0.5" width="34" height="35" rx="8.5" fill="none" />
+            </g>
+
+            <path id="bikingIcon1" class="inactiveIcon" data-name="Icon awesome-biking"
+              d="M16.367,3.928A1.964,1.964,0,1,0,14.4,1.964,1.964,1.964,0,0,0,16.367,3.928ZM16.2,8.879a1.305,1.305,0,0,0,.818.286h2.619a1.309,1.309,0,0,0,0-2.619h-2.16L14.567,4.215a1.307,1.307,0,0,0-1.67.028L8.314,8.17a1.309,1.309,0,0,0,.126,2.084l3.344,2.231v4.537a1.309,1.309,0,0,0,2.619,0V11.784A1.309,1.309,0,0,0,13.82,10.7L12.128,9.567l2.383-2.043Zm4.746,1.6a5.237,5.237,0,1,0,5.237,5.237A5.237,5.237,0,0,0,20.95,10.475Zm0,7.856a2.619,2.619,0,1,1,2.619-2.619A2.619,2.619,0,0,1,20.95,18.331ZM5.237,10.475a5.237,5.237,0,1,0,5.237,5.237A5.237,5.237,0,0,0,5.237,10.475Zm0,7.856a2.619,2.619,0,1,1,2.619-2.619A2.619,2.619,0,0,1,5.237,18.331Z"
+              transform="translate(4.651 5.955)" fill="#707070" />
+          </g>
+        </svg>
+      </label>
+
+
+
+      <label for="driving1">
+        <input type="radio" name="transportation1" value="driving" id="driving1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="35" height="36" viewBox="0 0 35 36">
+
+
+          <g id="Group_33" data-name="Group 33" transform="translate(-0.068 -0.086)">
+            <g id="boxFillDriving1" class="inactiveBox" data-name="Rectangle 11" transform="translate(0.068 0.086)"
+              fill="#fff" stroke="#e1e1e1" stroke-width="1">
+              <rect width="35" height="36" rx="9" stroke="none" />
+              <rect x="0.5" y="0.5" width="34" height="35" rx="8.5" fill="none" />
+            </g>
+            <path id="drivingIcon1" class="inactiveIcon" data-name="Icon awesome-car-side"
+              d="M22.259,8.8H21.6L17.154,3.233a2.62,2.62,0,0,0-2.045-.983H6.356A2.618,2.618,0,0,0,3.924,3.9L1.964,8.889A2.613,2.613,0,0,0,0,11.416V16a.655.655,0,0,0,.655.655H2.619a3.928,3.928,0,1,0,7.856,0h5.237a3.928,3.928,0,1,0,7.856,0h1.964A.655.655,0,0,0,26.187,16V12.725A3.928,3.928,0,0,0,22.259,8.8ZM6.547,18.617a1.964,1.964,0,1,1,1.964-1.964A1.966,1.966,0,0,1,6.547,18.617ZM9.493,8.8H4.785L6.356,4.869H9.493Zm1.964,0V4.869h3.652L18.251,8.8Zm8.184,9.82A1.964,1.964,0,1,1,21.6,16.653,1.966,1.966,0,0,1,19.641,18.617Z"
+              transform="translate(4.781 4.869)" fill="#707070" />
+          </g>
+        </svg>
+
+      </label>
+      <br>
+      <input type="submit" value="Find a Spot" id="submit1" onclick="resultsDivOn()">
+    </form>
+  </div>
+
+  <!--@@@@@ input form 2 -->
+  <div id="input2" class="disappear tab">
+    <form id="inputform2" onsubmit="return false" data-userindex="1">
+      <div class="locationAndPin">
+
+
+        <img id="formPin" src="img/mapMarker-bud1.svg">
+
+
+        <input type="text" placeholder="Use current location..." id="locationinput2" name="locationinput2">
+      </div><br>
+
+      <label for="traveltimeinput2">How much commuting time do they have?</label><br>
       <input type="number" min="1" max="60" id="traveltimeinput2" value="15" name="traveltimeinput2"> Minutes<br>
 
 
-      <label for="walking2" onclick="walkingSelect2();">
-        <input type="radio" name="transportation" value="walking" id="walking2" checked>
+      <label for="walking2">
+        <input type="radio" name="transportation2" value="walking" id="walking2" checked>
         <svg xmlns="http://www.w3.org/2000/svg" width="35" height="36" viewBox="0 0 35 36">
 
           <g id="Group_31" data-name="Group 31" transform="translate(0.026 -0.086)">
@@ -214,8 +308,8 @@
 
 
 
-      <label for="cycling2" onclick="bikingSelect2();">
-        <input type="radio" name="transportation" value="cycling" id="cycling2">
+      <label for="cycling2">
+        <input type="radio" name="transportation2" value="cycling" id="cycling2">
         <svg xmlns="http://www.w3.org/2000/svg" width="35" height="36" viewBox="0 0 35 36">
           <g id="Group_32" data-name="Group 32" transform="translate(-0.021 -0.086)">
 
@@ -234,8 +328,8 @@
 
 
 
-      <label for="driving2" onclick="drivingSelect2();">
-        <input type="radio" name="transportation" value="driving" id="driving2">
+      <label for="driving2">
+        <input type="radio" name="transportation2" value="driving" id="driving2">
         <svg xmlns="http://www.w3.org/2000/svg" width="35" height="36" viewBox="0 0 35 36">
 
 
@@ -253,12 +347,12 @@
 
       </label>
       <br>
-      <input type="submit" value="Find a Spot" id="submit2" onclick="resultsDivOn2()">
+      <input type="submit" value="Find a Spot" id="submit2" onclick="resultsDivOn()">
     </form>
   </div>
 
 
-</div>
+  </div>
 
   <br>
 
@@ -274,60 +368,64 @@
     <div id="resultsDiv" class="divDown">
       <!--id for result div-->
       <div id="backArrow" class="span1"><img src="img/back.svg" onclick="backTabs();"></div>
-<div class="span6" id="space"></div>
+      <div class="span6" id="space"></div>
       <div id="upContainer" class="span1" onclick="resultsUp();"><img id="up" src=img/up.svg></div>
 
 
 
 
-      <div class="span8 resultsCard1">
-        <div class="span1 locationLetter" id="locationA">A</div>
+      <div class="span8 resultsCard1 resultsdiv">
+        <div class="span1 locationLetter" id="location0">A</div>
         <div class="textCard span6">
-          <h1 id="choiceA"> Sample Name</h1>
-          <h2 id="choiceAddressA">123 Sample St, Toronto, ON. M3M3M3</h2>
-          <h3 id="restaurantType"><em>Cafe</em></h3>
+          <h1 id="choice0"> Sample Name</h1>
+          <h2 id="choiceAddress0">123 Sample St, Toronto, ON. M3M3M4</h2>
+          <h3 id="restaurantType0"><em>Cafe</em></h3>
         </div>
-        <div class="span1 linkIcon" id="linkA" onclick="copyAddressA();"><img src="img/copypaste.svg"></div>
+        <div class="span1 linkIcon" id="link0" data-resultindex="0"><img src="img/copypaste.svg" data-resultindex="0">
+        </div>
       </div>
 
-      <div class="span8 resultsCard1">
-        <div class="span1 locationLetter" id="locationB">B</div>
+      <div class="span8 resultsCard1 resultsdiv">
+        <div class="span1 locationLetter" id="location1">B</div>
         <div class="textCard span6">
-          <h1 id="choiceB">Sample Name2</h1>
-          <h2 id="choiceAddressB">123 Sample St, Toronto, ON. M3M3M3</h2>
-          <h3 id="restaurantType"><em>Cafe</em></h3>
+          <h1 id="choice1">Sample Name2</h1>
+          <h2 id="choiceAddress1">123 Sample St, Toronto, ON. M3M3M3</h2>
+          <h3 id="restaurantType1"><em>Cafe</em></h3>
         </div>
-        <div class="span1 linkIcon" onclick="copyAddressB();" id="linkB"><img src="img/copypaste.svg"></div>
+        <div class="span1 linkIcon" id="link1"><img src="img/copypaste.svg" data-resultindex="1"></div>
       </div>
 
-      <div class="span8 resultsCard1">
-        <div class="span1 locationLetter" id="locationC">C</div>
+      <div class="span8 resultsCard1 resultsdiv">
+        <div class="span1 locationLetter" id="location2">C</div>
         <div class="textCard span6">
-          <h1 id="choiceC">Sample Name</h1>
-          <h2 id="choiceAddressC">123 Sample St, Toronto, ON. M3M3M3</h2>
-          <h3 id="restaurantType"><em>Cafe</em></h3>
+          <h1 id="choice2">Sample Name</h1>
+          <h2 id="choiceAddress2">123 Sample St, Toronto, ON. M3M3M3</h2>
+          <h3 id="restaurantType2"><em>Cafe</em></h3>
         </div>
-        <div class="span1 linkIcon" onclick="copyAddressC();" id="linkC"><img src="img/copypaste.svg"></div>
+        <div class="span1 linkIcon" id="link2" data-resultindex="2"><img src="img/copypaste.svg" data-resultindex="2">
+        </div>
       </div>
 
-      <div class="span8 resultsCard1">
-        <div class="span1 locationLetter" id="locationD">D</div>
+      <div class="span8 resultsCard1 resultsdiv">
+        <div class="span1 locationLetter" id="location3">D</div>
         <div class="textCard span6">
-          <h1 id="choiceD">Sample Name</h1>
-          <h2 id="choiceAddressD">123 Sample St, Toronto, ON. M3M3M3</h2>
-          <h3 id="restaurantType"><em>Cafe</em></h3>
+          <h1 id="choice3">Sample Name</h1>
+          <h2 id="choiceAddress3">123 Sample St, Toronto, ON. M3M3M3</h2>
+          <h3 id="restaurantType3"><em>Cafe</em></h3>
         </div>
-        <div class="span1 linkIcon" onclick="copyAddressD();" id="linkD"><img src="img/copypaste.svg"></div>
+        <div class="span1 linkIcon" id="link3" data-resultindex="3"><img src="img/copypaste.svg" data-resultindex="3">
+        </div>
       </div>
 
-      <div class="span8 resultsCard1">
-        <div class="span1 locationLetter" id="locationE">E</div>
+      <div class="span8 resultsCard1 resultsdiv">
+        <div class="span1 locationLetter" id="location4">E</div>
         <div class="textCard span6">
-          <h1 id="choiceE">Sample Name</h1>
-          <h2 id="choiceAddressE">123 Sample St, Toronto, ON. M3M3M3</h2>
-          <h3 id="restaurantType"><em>Cafe</em></h3>
+          <h1 id="choice4">Sample Name</h1>
+          <h2 id="choiceAddress4">123 Sample St, Toronto, ON. M3M3M3</h2>
+          <h3 id="restaurantType4"><em>Cafe</em></h3>
         </div>
-        <div class="span1 linkIcon" onclick="copyAddressE();" id="linkE"><img src="img/copypaste.svg"></div>
+        <div class="span1 linkIcon" id="link4" data-resultindex="4"><img src="img/copypaste.svg" data-resultindex="4">
+        </div>
       </div>
 
 
@@ -370,14 +468,12 @@
     </div> -->
 
 
-    <div id="myElement"></div>
+  <div id="myElement"></div>
 
-
-
-  <script src="js/main.js">  </script>
- 
-    <!-- // Add your Mapbox access token -->
+  <!-- // Add your Mapbox access token -->
 
 </body>
 
 </html>
+
+<script src="js/main.js">  </script>
