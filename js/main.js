@@ -1,12 +1,14 @@
+// Written by Vonne and Isabel :)
+
+// GLOBALS CONSTANTS --------------------------------------------------
 const MAPBOX_ACCESS_CODE = "pk.eyJ1IjoiaWRhdGFycyIsImEiOiJja2w5MHB2dWUwMzYyMndwZmM0djM3ZDVsIn0.T7Tr5He16zekwZXuBL9uUw";
-mapboxgl.accessToken = MAPBOX_ACCESS_CODE;
-const defaultposn = [-77.0369, 38.895];
+const defaultposn = [-79.3832, 43.6532]; // Toronto
 const usercolours = ["#FFA011", "#800000", "#6A7A5B"];
 const resultcolor = "#635E54";
 const defaulttime = 15;
 const defaulttransportation = "walking";
 const maxResults = 5;
-
+const maxUsers = 3;
 const SICvalues = {
     icecream: 581203,
     allrestaurants: 581208,
@@ -25,45 +27,46 @@ document.getElementById("pickFood").addEventListener("change", () => {
     if (users[0].isochrone != null) search();
 });
 
-let SICcode = SICvalues.allrestaurants;
-let resultmarkers = [];
-
-// GLOBALS --------------------------------------------------
-
-const maxUsers = 3;
+// GLOBAL DATA --------------------------------------------------
 let users = [new User(0)];
 let currentuser = 0;
+let SICcode = SICvalues.allrestaurants;
+let resultmarkers = [];
+let geolocation = null;
+let geolocationerror = false;
+let map;
+mapboxgl.accessToken = MAPBOX_ACCESS_CODE;
 
+// USER CLASS --------------------------------------------------
 function User(index) {
     this.index = index;
     this.posn = null;
     this.transportation = defaulttransportation;
     this.minutes = defaulttime;
+    this.loaded = false; // do not remove or it will bug
+    this.isochrone = null;
     this.marker = new mapboxgl.Marker({
         'color': usercolours[index]
     })
-    this.loaded = false;
-    this.isochrone = null;
 
-    // DOM stuff
+    // DOM pointers
     this.boxFillDriving = document.getElementById("boxFillDriving" + index);
     this.boxFillBiking = document.getElementById("boxFillBiking" + index);
     this.boxFillWalking = document.getElementById("boxFillWalking" + index);
-
     this.walkingIcon = document.getElementById("walkingIcon" + index);
     this.bikingIcon = document.getElementById("bikingIcon" + index);
     this.drivingIcon = document.getElementById("drivingIcon" + index);
-
     this.tab = document.getElementById("tab" + index);
     this.form = document.getElementById("input" + index);
 }
 
-let map;
-
-let geolocation = null;
-let geolocationerror = false;
-
+// Renders the marker of the given User
 function rendermarker(user) {
+    if (user.posn == null) {
+        console.log("Failed to render marker for user #" + user.index + ", position is null");
+        return;
+    }
+
     user.marker.setLngLat({
         lon: user.posn[0],
         lat: user.posn[1]
@@ -79,17 +82,10 @@ function rendermarker(user) {
 
 const splash = document.querySelector('.splash');
 
-/*document.addEventListener('DOMContentLoaded', (e) => {
-  setTimeout(()=>{
-      splash.classList.add('display-none');
-  }, 3000);
-})*/
-
 function onSuccess(position) {
     console.log(position);
     geolocation = [position.coords.longitude, position.coords.latitude];
     users[0].posn = [position.coords.longitude, position.coords.latitude];
-    //document.getElementById("currentlocation").checked = true;
 
     document.addEventListener('DOMContentLoaded', (e) => {
         setTimeout(()=>{
@@ -97,7 +93,6 @@ function onSuccess(position) {
         }, 2000);
     })
       
-
     map = new mapboxgl.Map({
         container: 'map', // Specify the container ID
         style: 'mapbox://styles/mapbox/light-v10', // Specify which map style to use
@@ -112,9 +107,7 @@ function onError(error) {
     geolocationerror = true;
     users[0].posn = defaultposn;
 
-    setTimeout(()=>{
-        splash.classList.add('display-none');
-    }, 2000);
+    setTimeout(() => {splash.classList.add('display-none');}, 2000);
 
     map = new mapboxgl.Map({
         container: 'map', // Specify the container ID
@@ -124,6 +117,7 @@ function onError(error) {
     });
 }
 
+// basically main()
 navigator.geolocation.getCurrentPosition(onSuccess, onError, {
     timeout: 5000,
     enableHighAccuracy: false,
@@ -131,27 +125,29 @@ navigator.geolocation.getCurrentPosition(onSuccess, onError, {
 });
 
 // ISOCHRONE --------------------------------------
-// // Create variables to use in getIso()
 const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/';
 
-// Create a function that sets up the Isochrone API query then makes an Ajax call
+// renders User's isochrone if loaded, then calls search()
 function getIso(user) {
-    if (user.posn == null || !user.loaded) return;
+    if (user.posn == null || !user.loaded) {
+        if (user.posn == null) console.log("Failed to render isochrone for user #" + user.index + ", position is null");
+        if (!user.loaded) console.log("Failed to render isochrone for user #" + user.index + ", isochrone is not loaded");
+        return;
+    }
+
     var query = urlBase + user.transportation + '/' + user.posn[0] + ',' + user.posn[1] + '?contours_minutes=' + user.minutes + '&polygons=true&access_token=' + mapboxgl.accessToken;
 
     $.ajax({
         method: 'GET',
         url: query
     }).done(function (data) {
-        // Set the 'iso' source's data to what's returned by the API query
         map.getSource('iso' + user.index).setData(data);
         user.isochrone = data.features[0].geometry.coordinates[0];
         search();
     })
-
 };
 
-// updates the isochrone
+// updates isochrone parameters, then loads isochrone if necessary and calls getIso
 function update(e, userindex) {
     let user = users[userindex];
 
@@ -161,6 +157,7 @@ function update(e, userindex) {
     } else if (e.target.name == "transportation" + userindex) {
         user.transportation = e.target.value;
         if (e.target.value == "walking") {
+            // add color to selected button
             user.boxFillWalking.classList.remove("inactiveBox");
             user.walkingIcon.classList.remove("inactiveIcon")
             user.boxFillWalking.classList.add("activeBox");
@@ -169,13 +166,10 @@ function update(e, userindex) {
             //remove color from unselected buttons, add inactive class
             user.boxFillBiking.classList.remove("activeBox");
             user.boxFillDriving.classList.remove("activeBox");
-
             user.bikingIcon.classList.remove("activeIcon");
             user.drivingIcon.classList.remove("activeIcon");
-
             user.boxFillBiking.classList.add("inactiveBox");
             user.boxFillDriving.classList.add("inactiveBox");
-
             user.bikingIcon.classList.add("inactiveIcon");
             user.drivingIcon.classList.add("inactiveIcon");
             
@@ -189,13 +183,10 @@ function update(e, userindex) {
             //remove color from unselected buttons, add inactive class
             user.boxFillDriving.classList.remove("activeBox");
             user.boxFillWalking.classList.remove("activeBox");
-
             user.drivingIcon.classList.remove("activeIcon");
             user.walkingIcon.classList.remove("activeIcon");
-
             user.boxFillDriving.classList.add("inactiveBox");
             user.boxFillWalking.classList.add("inactiveBox");
-
             user.drivingIcon.classList.add("inactiveIcon");
             user.walkingIcon.classList.add("inactiveIcon");
         } else if (e.target.value == "driving") {
@@ -208,13 +199,10 @@ function update(e, userindex) {
             //remove color from unselected buttons, add inactive class
             user.boxFillBiking.classList.remove("activeBox");
             user.boxFillWalking.classList.remove("activeBox");
-
             user.bikingIcon.classList.remove("activeIcon");
             user.walkingIcon.classList.remove("activeIcon");
-
             user.boxFillBiking.classList.add("inactiveBox");
             user.boxFillWalking.classList.add("inactiveBox");
-
             user.bikingIcon.classList.add("inactiveIcon");
             user.walkingIcon.classList.add("inactiveIcon");
         }
@@ -232,7 +220,8 @@ function update(e, userindex) {
                 search();
                 return;
             } else if (geolocationerror) {
-                console.log("how did I end up here");
+                console.log("Unable to use geolocation");
+
                 return; // add user stuff for this
             } else user.posn = geolocation;
         } else { // geocode
@@ -598,7 +587,7 @@ let errorVis = () => {
     errorContainer.classList.add("appearStay");
 }
 
-let closeErrorContainer = () =>{
+let closeErrorContainer = () => {
     errorContainer.classList.remove("appearStay");
     errorContainer.classList.add("disappear");
 }
