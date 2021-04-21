@@ -1,8 +1,8 @@
 const MAPBOX_ACCESS_CODE = "pk.eyJ1IjoiaWRhdGFycyIsImEiOiJja2w5MHB2dWUwMzYyMndwZmM0djM3ZDVsIn0.T7Tr5He16zekwZXuBL9uUw";
 mapboxgl.accessToken = MAPBOX_ACCESS_CODE;
 const defaultposn = [-77.0369, 38.895];
-const usercolours = ["#314ccd", "#314ccd", "#314ccd"];
-const resultcolor = "ffffff";
+const usercolours = ["#FFA011", "#800000", "#314ccd"];
+const resultcolor = "000000";
 const defaulttime = 15;
 const defaulttransportation = "walking";
 const maxResults = 5;
@@ -288,15 +288,10 @@ function updatePosn(user) {
 
 function search() {
     let resultdivs = document.getElementsByClassName("resultsdiv");
-    let options = {tolerance: 0.01, highQuality: false};
+    let options = {tolerance: 0.00005, highQuality: false};
     let isochrone = turf.simplify(turf.polygon([users[0].isochrone]), options);
     for (let i = 1; i < users.length; i++) {
         isochrone = turf.intersect(isochrone, turf.polygon([users[i].isochrone]));
-    }
-
-    if (isochrone == null) {
-        // error handling
-        return;
     }
     
     for (let i = 0; i < resultmarkers.length; i++) {
@@ -304,22 +299,36 @@ function search() {
     }
 
     for (let i = 0; i < resultdivs.length; i++) {
-        resultdivs[i].style.display = "";
+        resultdivs[i].style.opacity = "";
         document.getElementById("choice" + i).innerHTML = "";
         document.getElementById("choiceAddress" + i).innerHTML = "";
         document.getElementById("restaurantType" + i).innerHTML = "";
     }
 
+    if (isochrone == null) {
+        // error handling
+        console.log("no no absolutely not");
+        return;
+    }
+
     let polygons = isochrone.geometry.coordinates;
+    if (polygons.length != 1) {
+        polygons.sort(function(a, b){
+            // ASC  -> a.length - b.length
+            // DESC -> b.length - a.length
+            return b[0].length - a[0].length;
+        });
+    }
     let results = [];
 
     console.log(polygons);
     for (let i = 0; i < polygons.length; i++) {
         let curr = polygons[i];
+        if (polygons.length != 1) curr = curr[0];
         let string = "";
         for (let j = 0; j < curr.length; j++) {
             if (j != 0) string += ",";
-            string += curr[j][1] + "," + curr[j][0];
+            string = string.concat(curr[j][1] + "," + curr[j][0]);
         }
         const searchbase = "http://www.mapquestapi.com/search/v2/polygon?key=GviXRAtG1HuP7jTZI5WwPpND9Gu7UHfj&ambiguities=ignore&"
         var query = searchbase + "polygon=" + string + "&maxMatches=" + maxResults + "&hostedData=mqap.ntpois|group_sic_code=?|" + SICcode;
@@ -330,32 +339,34 @@ function search() {
             dataType: 'jsonp',
         }).done(function (data) {
             if (data.resultsCount == 0 || data.info.statusCode != 0) {
+                if (data.info.statusCode != 0) {
+                    console.log(i + " " + string);
+                }
                 // ERROR HANDLING
             } else {
-                console.log(data);
                 results = results.concat(data.searchResults);
                 console.log(results);
             }
 
             if (i == polygons.length - 1) {
-                let i = 0;
-                while (i < results.length) {
-                    let curr2 = results[i];
-                    document.getElementById("choice" + i).innerHTML = curr2.name;
-                    document.getElementById("choiceAddress" + i).innerHTML = curr2.fields.address;
-                    document.getElementById("restaurantType" + i).innerHTML = curr2.fields.group_sic_code_name;
+                let k = 0;
+                while (k < results.length) {
+                    let curr2 = results[k];
+                    document.getElementById("choice" + k).innerHTML = curr2.name;
+                    document.getElementById("choiceAddress" + k).innerHTML = curr2.fields.address;
+                    document.getElementById("restaurantType" + k).innerHTML = curr2.fields.group_sic_code_name;
 
                     // Set options
                     resultmarkers.push(new mapboxgl.Marker({
-                        color: "#FFFFFF",
+                        color: resultcolor,
                     }).setLngLat([curr2.fields.disp_lng, curr2.fields.disp_lat])
                         .addTo(map));
 
-                    i++;
+                    k++;
                 }
-                while (i < resultdivs.length) {
-                    resultdivs[i].style.display = "none";
-                    i++;
+                while (k < resultdivs.length) {
+                    resultdivs[k].style.opacity = "0";
+                    k++;
                 }
             }
         });
@@ -465,6 +476,7 @@ function copyAddress(e) {
     document.body.removeChild(aux)
     tooltipContainer.classList.remove("disappear");
     tooltipContainer.classList.add("appear");
+    setTimeout(function(){tooltipContainer.classList.remove("appear"); tooltipContainer.classList.add("disppear");}, 1000 ); 
 }
 
 let copybuttons = document.getElementsByClassName("linkIcon");
@@ -517,6 +529,13 @@ mc.on("pandown", function (ev) {
 
     // up.src="img/up.svg";
 });
+mc.on("panright", function (ev) {
+    inputContainer.classList.remove("disappear");
+    resultsContainer.classList.add("disappear");
+    up.classList.remove("rotate");
+    up.classList.add("upright");
+    myElement.style.bottom = "-20em";
+});
 
 
 
@@ -535,3 +554,16 @@ mc.on("pandown", function (ev) {
 // mc.on("panleft panright panup pandown tap press", function(ev) {
 //     myElement.textContent = ev.type +" gesture detected.";
 // });
+
+// ERROR GARBAGE
+let errorContainer = document.getElementById("errorContainer");
+
+let errorVis = () => {
+    errorContainer.classList.remove("disappear");
+    errorContainer.classList.add("appearStay");
+}
+
+let closeErrorContainer = () =>{
+    errorContainer.classList.remove("appearStay");
+    errorContainer.classList.add("disappear");
+}
