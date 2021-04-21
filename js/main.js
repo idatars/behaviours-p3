@@ -153,7 +153,7 @@ function submit() {
                 'layout': {},
                 'paint': {
                     // The fill color for the layer is set to a light purple
-                    'fill-color': '#5a3fc0',
+                    'fill-color': usercolours[i],
                     'fill-opacity': 0.3
                 }
             }, "poi-label");
@@ -359,8 +359,7 @@ function search() {
                     // Set options
                     resultmarkers.push(new mapboxgl.Marker({
                         color: resultcolor,
-                    }).setLngLat([curr2.fields.disp_lng, curr2.fields.disp_lat])
-                        .addTo(map));
+                    }).setLngLat([curr2.fields.disp_lng, curr2.fields.disp_lat]).setPopup(new mapboxgl.Popup().setHTML(k)).addTo(map));
 
                     k++;
                 }
@@ -413,7 +412,22 @@ function addUser() {
     users.push(new User(newuserindex));
 
     users[newuserindex].tab.classList.remove("disappear");
-    switchtabs(currentuser, newuserindex);
+
+    let from = users[currentuser];
+    let to = users[newuserindex];
+
+    to.tab.classList.add("activeTab");
+    to.tab.classList.remove("inactiveTab");
+
+    //deactivate mylocation tab
+    from.tab.classList.remove("activeTab");
+    from.tab.classList.add("inactiveTab");
+
+    //switch form to bud's form
+    to.form.classList.remove("disappear");
+    from.form.classList.add("disappear");
+
+    currentuser = newuserindex;
 }
 
 document.getElementById("addBud").addEventListener("click", addUser);
@@ -567,3 +581,12 @@ let closeErrorContainer = () =>{
     errorContainer.classList.remove("appearStay");
     errorContainer.classList.add("disappear");
 }
+
+const splash = document.querySelector('.splash');
+
+document.addEventListener('DOMContentLoaded', (e)=>{
+  setTimeout(()=>{
+      splash.classList.add('display-none');
+
+  }, 2000);
+})
