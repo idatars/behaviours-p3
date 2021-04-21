@@ -77,11 +77,26 @@ function rendermarker(user) {
 
 // INITIAL MAP RENDER ------------------------------------------------------
 
+const splash = document.querySelector('.splash');
+
+/*document.addEventListener('DOMContentLoaded', (e) => {
+  setTimeout(()=>{
+      splash.classList.add('display-none');
+  }, 3000);
+})*/
+
 function onSuccess(position) {
     console.log(position);
     geolocation = [position.coords.longitude, position.coords.latitude];
     users[0].posn = [position.coords.longitude, position.coords.latitude];
     //document.getElementById("currentlocation").checked = true;
+
+    document.addEventListener('DOMContentLoaded', (e) => {
+        setTimeout(()=>{
+            splash.classList.add('display-none');
+        }, 2000);
+    })
+      
 
     map = new mapboxgl.Map({
         container: 'map', // Specify the container ID
@@ -97,6 +112,10 @@ function onError(error) {
     geolocationerror = true;
     //document.getElementById("manuallocation").checked = true;
 
+    setTimeout(()=>{
+        splash.classList.add('display-none');
+    }, 2000);
+
     map = new mapboxgl.Map({
         container: 'map', // Specify the container ID
         style: 'mapbox://styles/mapbox/light-v10', // Specify which map style to use
@@ -106,7 +125,7 @@ function onError(error) {
 }
 
 navigator.geolocation.getCurrentPosition(onSuccess, onError, {
-    timeout: 10000,
+    timeout: 5000,
     enableHighAccuracy: false,
     maximumAge: 0
 });
@@ -607,12 +626,3 @@ let closeErrorContainer = () =>{
     errorContainer.classList.remove("appearStay");
     errorContainer.classList.add("disappear");
 }
-
-const splash = document.querySelector('.splash');
-
-document.addEventListener('DOMContentLoaded', (e)=>{
-  setTimeout(()=>{
-      splash.classList.add('display-none');
-
-  }, 2000);
-})
