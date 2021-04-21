@@ -2,7 +2,7 @@ const MAPBOX_ACCESS_CODE = "pk.eyJ1IjoiaWRhdGFycyIsImEiOiJja2w5MHB2dWUwMzYyMndwZ
 mapboxgl.accessToken = MAPBOX_ACCESS_CODE;
 const defaultposn = [-77.0369, 38.895];
 const usercolours = ["#FFA011", "#800000", "#314ccd"];
-const resultcolor = "000000";
+const resultcolor = "#635E54";
 const defaulttime = 15;
 const defaulttransportation = "walking";
 const maxResults = 5;
@@ -85,7 +85,7 @@ function onSuccess(position) {
 
     map = new mapboxgl.Map({
         container: 'map', // Specify the container ID
-        style: 'mapbox://styles/mapbox/streets-v11', // Specify which map style to use
+        style: 'mapbox://styles/mapbox/light-v10', // Specify which map style to use
         center: geolocation, // Specify the starting position
         zoom: 13, // Specify the starting zoom
     });
@@ -99,7 +99,7 @@ function onError(error) {
 
     map = new mapboxgl.Map({
         container: 'map', // Specify the container ID
-        style: 'mapbox://styles/mapbox/streets-v11', // Specify which map style to use
+        style: 'mapbox://styles/mapbox/light-v10', // Specify which map style to use
         center: defaultposn, // Specify the starting position
         zoom: 13, // Specify the starting zoom
     });
