@@ -447,7 +447,7 @@ document.getElementById("addBud").addEventListener("click", addUser);
 
 // resets user at the given index, then calls search()
 function resetUser(index) {
-    switchtabs(index, 0);
+    if (index == currentuser) switchtabs(index, 0);
     users[index].tab.classList.add("disappear");
     if (users[index].isochrone != null) {
         map.removeLayer("isoLayer" + index);
@@ -458,14 +458,14 @@ function resetUser(index) {
     users[index] = new User(index);
 
     document.getElementById("locationinput" + index).value = "";
-    search();
+    if (users[0].isochrone != null) search();
 }
 document.getElementById("removeBud1").addEventListener("click", (e) => {resetUser(1)});
 document.getElementById("removeBud2").addEventListener("click", (e) => {resetUser(2)});
 
 // switches tabs unless indexes are the same
 function switchtabs(fromindex, toindex) {
-    if (fromindex == toindex) return;
+    if (fromindex == toindex || !users[toindex].active) return;
     let from = users[fromindex];
     let to = users[toindex];
 
