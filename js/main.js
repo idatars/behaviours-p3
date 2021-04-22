@@ -81,7 +81,7 @@ function onSuccess(position) {
     geolocation = [position.coords.longitude, position.coords.latitude];
     users[0].posn = [position.coords.longitude, position.coords.latitude];
 
-    setTimeout(() => {splash.classList.add('display-none');}, 2000);
+    setTimeout(() => {splash.classList.add('display-none'); loadIso(users[0]);}, 2000);
       
     map = new mapboxgl.Map({
         container: 'map', // Specify the container ID
@@ -95,7 +95,6 @@ function onSuccess(position) {
 function onError(error) {
     console.log(error);
     geolocationerror = true;
-    users[0].posn = defaultposn;
 
     setTimeout(() => {splash.classList.add('display-none');}, 2000);
 
@@ -109,13 +108,43 @@ function onError(error) {
 
 // basically main()
 navigator.geolocation.getCurrentPosition(onSuccess, onError, {
-    timeout: 5000,
+    timeout: 7000,
     enableHighAccuracy: false,
     maximumAge: 0
 });
 
 // ISOCHRONE --------------------------------------
 const urlBase = 'https://api.mapbox.com/isochrone/v1/mapbox/';
+
+function loadIso(user) {
+    if (user.posn == null || user.loaded) {
+        if (user.posn == null) console.log("Failed to load isochrone for user #" + user.index + ", position is null");
+        if (user.loaded) console.log("Failed to load isochrone for user #" + user.index + ", isochrone is already loaded");
+        return;
+    }
+
+    map.addSource('iso' + user.index, {
+        type: 'geojson',
+        data: {
+            'type': 'FeatureCollection',
+            'features': []
+        }
+    });
+
+    map.addLayer({
+        'id': 'isoLayer' + user.index,
+        'type': 'fill',
+        'source': 'iso' + user.index,
+        'layout': {},
+        'paint': {
+            'fill-color': usercolours[user.index],
+            'fill-opacity': 0.3
+        }
+    }, "poi-label");
+
+    user.loaded = true;
+    getIso(user);
+}
 
 // renders User's isochrone if loaded, then calls search()
 function getIso(user) {
@@ -219,33 +248,12 @@ function update(e, userindex) {
             let query = e.target.value.replace(" ", "%20");
 
             makeRequest("https://api.mapbox.com/geocoding/v5/mapbox.places/" + query + ".json?proximity=" + users[0].posn[0] + "," + users[0].posn[1] + "&access_token=" + MAPBOX_ACCESS_CODE, user);
+            return;
         }
     }
 
     if (user.loaded) getIso(user);
-    else { // initally renders isochrone
-        map.addSource('iso' + userindex, {
-            type: 'geojson',
-            data: {
-                'type': 'FeatureCollection',
-                'features': []
-            }
-        });
-
-        map.addLayer({
-            'id': 'isoLayer' + userindex,
-            'type': 'fill',
-            'source': 'iso' + userindex,
-            'layout': {},
-            'paint': {
-                'fill-color': usercolours[userindex],
-                'fill-opacity': 0.3
-            }
-        }, "poi-label");
-
-        getIso(user);
-        user.loaded = true;
-    }
+    else loadIso(user);
 }
 document.getElementById("inputform0").addEventListener("change", (e) => {update(e, 0)});
 document.getElementById("inputform1").addEventListener("change", (e) => {update(e, 1)});
@@ -279,7 +287,8 @@ function updatePosn(user) {
             user.posn = result.features[0].center;
 
             rendermarker(user);
-            getIso(user);
+            if (user.loaded) getIso(user);
+            else loadIso(user);
         } else {
             console.log(httpRequest)
             errorVis('Unable to geocode your location');
@@ -351,6 +360,7 @@ function search() { // free me please i can't do this anymore
             if (results.length == 0) {
                 errorVis("No results for your selection!");
                 resulterror = true;
+                backTabs();
                 return;
             }
 
@@ -374,13 +384,13 @@ function search() { // free me please i can't do this anymore
                 }
                 resulterror = false;
             }
+            if (resulterror) backTabs();
         }).fail(function() {
             errorVis("Unable to retrieve results for your selection");
             resulterror = true;
+            backTabs();
         });
     }
-
-    if (resulterror) backTabs();
 }
 
 // INTERFACE --------------------------------------------------------
@@ -391,6 +401,10 @@ const resultsContainer = document.getElementById("resultsContainer");
 let resultsDivOn = () => {
     if (resulterror) {
         errorVis("Unable to get your results, try adjusting the parameters!");
+        return;
+    }
+    if (users[0].posn == null) {
+        errorVis("Unable to get your location, please enter it manually!");
         return;
     }
     inputContainer.classList.add("disappear");
@@ -523,13 +537,7 @@ mc.on("pandown", function (ev) {
     up.classList.add("upright");
 });
 
-mc.on("panright", function (ev) {
-    inputContainer.classList.remove("disappear");
-    resultsContainer.classList.add("disappear");
-    up.classList.remove("rotate");
-    up.classList.add("upright");
-    myElement.style.bottom = "-20em";
-});
+mc.on("panright", backTabs);
 
 div0.on("panleft", resultsDivOn);
 div1.on("panleft", resultsDivOn);
@@ -537,7 +545,7 @@ div2.on("panleft", resultsDivOn);
 
 // results div up
 let up = document.getElementById("up");
-let resultsUp = () =>{
+let resultsUp = () => {
     if (myElement.classList.contains("divDown")){
         myElement.style.bottom = "0em";
         up.classList.add("rotate");
