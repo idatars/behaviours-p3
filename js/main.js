@@ -494,6 +494,7 @@ let tooltipContainer = document.getElementById("tooltipContainer");
 
 function copyAddress(e) {
     let aux = document.createElement("input");
+  tooltipContainer.style.display="block";
     let index = e.target.dataset.resultindex;
     aux.setAttribute("value", document.getElementById("choice" + index).innerHTML + " - " + document.getElementById("choiceAddress" + index).innerHTML);
     document.body.appendChild(aux);
@@ -501,8 +502,9 @@ function copyAddress(e) {
     document.execCommand("copy");
     document.body.removeChild(aux)
     tooltipContainer.classList.remove("disappear");
+    //   tooltipContainer.style.left="0";
     tooltipContainer.classList.add("appear");
-    setTimeout(function(){tooltipContainer.classList.remove("appear"); tooltipContainer.classList.add("disppear");}, 1000 ); 
+    setTimeout(function(){tooltipContainer.classList.remove("appear"); tooltipContainer.classList.add("disppear"); tooltipContainer.style.display="none"}, 2000 ); 
 }
 let copybuttons = document.getElementsByClassName("linkIcon");
 for (let i = 0; i < copybuttons.length; i++) {
