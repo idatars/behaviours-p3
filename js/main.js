@@ -81,11 +81,7 @@ function onSuccess(position) {
     geolocation = [position.coords.longitude, position.coords.latitude];
     users[0].posn = [position.coords.longitude, position.coords.latitude];
 
-    document.addEventListener('DOMContentLoaded', (e) => {
-        setTimeout(()=>{
-            splash.classList.add('display-none');
-        }, 2000);
-    })
+    setTimeout(() => {splash.classList.add('display-none');}, 2000);
       
     map = new mapboxgl.Map({
         container: 'map', // Specify the container ID
@@ -378,6 +374,9 @@ function search() { // free me please i can't do this anymore
                 }
                 resulterror = false;
             }
+        }).fail(function() {
+            errorVis("Unable to retrieve results for your selection");
+            resulterror = true;
         });
     }
 
