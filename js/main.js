@@ -22,7 +22,7 @@ const SICvalues = {
 }
 
 // GLOBAL DATA --------------------------------------------------
-let users = [new User(0)];
+let users = [new User(0), new User(1), new User(2)];
 let currentuser = 0;
 let SICcode = SICvalues.allrestaurants;
 let resultmarkers = [];
@@ -43,6 +43,8 @@ function User(index) {
     this.marker = new mapboxgl.Marker({
         'color': usercolours[index]
     })
+    if (index == 0) this.active = true;
+    else this.active = false;
 
     // DOM pointers
     this.boxFillDriving = document.getElementById("boxFillDriving" + index);
@@ -247,7 +249,7 @@ function update(e, userindex) {
             if (e.target.value == "") return;
             let query = e.target.value.replace(" ", "%20");
 
-            makeRequest("https://api.mapbox.com/geocoding/v5/mapbox.places/" + query + ".json?proximity=" + users[0].posn[0] + "," + users[0].posn[1] + "&access_token=" + MAPBOX_ACCESS_CODE, user);
+            makeRequest("https://api.mapbox.com/geocoding/v5/mapbox.places/" + query + ".json?proximity=" + defaultposn[0] + "," + defaultposn[1] + "&access_token=" + MAPBOX_ACCESS_CODE, user);
             return;
         }
     }
@@ -319,7 +321,7 @@ function search() { // free me please i can't do this anymore
 
     let isochrone = turf.simplify(turf.polygon([users[0].isochrone]), options);
     for (let i = 1; i < users.length; i++) {
-        if (users[i].posn != null && users[i].isochrone != null) {
+        if (users[i].posn != null && users[i].isochrone != null && users[i].active) {
             isochrone = turf.intersect(isochrone, turf.polygon([users[i].isochrone]));
         }
     }
@@ -413,15 +415,20 @@ let resultsDivOn = () => {
 
 // adds user if there is space
 function addUser() {
-    let newuserindex = users.length;
+    let newuserindex = null;
+    for (let i = 0; i < users.length; i++) {
+        if (!users[i].active) {
+            newuserindex = i;
+            break;
+        }
+    }
 
-    if (newuserindex >= maxUsers) {
+    if (newuserindex == null) {
         errorVis("Max number of users already reached!");
         return;
     }
 
-    users.push(new User(newuserindex));
-
+    users[newuserindex].active = true;
     users[newuserindex].tab.classList.remove("disappear");
 
     let from = users[currentuser];
@@ -438,8 +445,8 @@ function addUser() {
 }
 document.getElementById("addBud").addEventListener("click", addUser);
 
-// removes user at the given index, then calls search()
-function removeUser(index) {
+// resets user at the given index, then calls search()
+function resetUser(index) {
     switchtabs(index, 0);
     users[index].tab.classList.add("disappear");
     if (users[index].isochrone != null) {
@@ -447,12 +454,14 @@ function removeUser(index) {
         map.removeSource("iso" + index);
     }
     users[index].marker.remove();
-    users.splice(index, 1);
+    
+    users[index] = new User(index);
+
     document.getElementById("locationinput" + index).value = "";
     search();
 }
-document.getElementById("removeBud1").addEventListener("click", (e) => {removeUser(1)});
-document.getElementById("removeBud2").addEventListener("click", (e) => {removeUser(2)});
+document.getElementById("removeBud1").addEventListener("click", (e) => {resetUser(1)});
+document.getElementById("removeBud2").addEventListener("click", (e) => {resetUser(2)});
 
 // switches tabs unless indexes are the same
 function switchtabs(fromindex, toindex) {
