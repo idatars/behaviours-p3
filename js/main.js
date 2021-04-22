@@ -9,6 +9,7 @@ const defaulttime = 15;
 const defaulttransportation = "walking";
 const maxResults = 5;
 const maxUsers = 3;
+const resultlabels = ['A', 'B', 'C', 'D', 'E']
 const SICvalues = {
     icecream: 581203,
     allrestaurants: 581208,
@@ -347,7 +348,7 @@ function search() { // free me please i can't do this anymore
             string = string.concat(curr[j][1] + "," + curr[j][0]);
         }
 
-        const searchbase = "http://www.mapquestapi.com/search/v2/polygon?key=GviXRAtG1HuP7jTZI5WwPpND9Gu7UHfj&ambiguities=ignore&"
+        const searchbase = "https://www.mapquestapi.com/search/v2/polygon?key=GviXRAtG1HuP7jTZI5WwPpND9Gu7UHfj&ambiguities=ignore&"
         var query = searchbase + "polygon=" + string + "&maxMatches=" + maxResults + "&hostedData=mqap.ntpois|group_sic_code=?|" + SICcode;
 
         $.ajax({
@@ -376,7 +377,7 @@ function search() { // free me please i can't do this anymore
 
                     resultmarkers.push(new mapboxgl.Marker({color: resultcolor})
                     .setLngLat([curr2.fields.disp_lng, curr2.fields.disp_lat])
-                    .setPopup(new mapboxgl.Popup().setHTML(k)).addTo(map));
+                    .setPopup(new mapboxgl.Popup().setHTML(resultlabels[k])).addTo(map));
 
                     k++;
                 }
