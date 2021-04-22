@@ -21,17 +21,12 @@ const SICvalues = {
     takeout: 581206
 }
 
-document.getElementById("pickFood").addEventListener("change", () => {
-    let value = document.getElementById("pickFood").value;
-    SICcode = SICvalues[value];
-    if (users[0].isochrone != null) search();
-});
-
 // GLOBAL DATA --------------------------------------------------
 let users = [new User(0)];
 let currentuser = 0;
 let SICcode = SICvalues.allrestaurants;
 let resultmarkers = [];
+let resulterror = false;
 let geolocation = null;
 let geolocationerror = false;
 let map;
@@ -79,7 +74,6 @@ function rendermarker(user) {
 }
 
 // INITIAL MAP RENDER ------------------------------------------------------
-
 const splash = document.querySelector('.splash');
 
 function onSuccess(position) {
@@ -221,8 +215,8 @@ function update(e, userindex) {
                 return;
             } else if (geolocationerror) {
                 console.log("Unable to use geolocation");
-
-                return; // add user stuff for this
+                errorVis("Unable to use your location, try entering your address manually!");
+                return;
             } else user.posn = geolocation;
         } else { // geocode
             if (e.target.value == "") return;
@@ -245,11 +239,9 @@ function update(e, userindex) {
         map.addLayer({
             'id': 'isoLayer' + userindex,
             'type': 'fill',
-            // Use "iso" as the data source for this layer
             'source': 'iso' + userindex,
             'layout': {},
             'paint': {
-                // The fill color for the layer is set to a light purple
                 'fill-color': usercolours[userindex],
                 'fill-opacity': 0.3
             }
@@ -263,13 +255,18 @@ document.getElementById("inputform0").addEventListener("change", (e) => {update(
 document.getElementById("inputform1").addEventListener("change", (e) => {update(e, 1)});
 document.getElementById("inputform2").addEventListener("change", (e) => {update(e, 2)});
 
+document.getElementById("pickFood").addEventListener("change", () => {
+    let value = document.getElementById("pickFood").value;
+    SICcode = SICvalues[value];
+    if (users[0].isochrone != null) search();
+});
 
 // GEOCODE
 function makeRequest(url, user) {
     httpRequest = new XMLHttpRequest();
 
     if (!httpRequest) {
-        alert('Giving up :( Cannot create an XMLHTTP instance');
+        errorVis('Cannot create an XMLHTTP instance to geocode your location!');
         return false;
     }
     httpRequest.onreadystatechange = () => { updatePosn(user) };
@@ -288,24 +285,25 @@ function updatePosn(user) {
             rendermarker(user);
             getIso(user);
         } else {
-            alert('There was a problem with the request.');
+            console.log(httpRequest)
+            errorVis('Unable to geocode your location');
         }
     }
 }
 
 // SEARCH
-
-function search() { // free me please
+function search() { // free me please i can't do this anymore
     let resultdivs = document.getElementsByClassName("resultsdiv");
     let options = {tolerance: 0.00005, highQuality: false};
 
     if (users[0].isochrone == null) {
+        errorVis("Error in getting results!");
+        console.log("Error in getting results, user #0 isochrone is null");
+        resulterror = true;
         return;
     }
     
-    for (let i = 0; i < resultmarkers.length; i++) {
-        resultmarkers[i].remove();
-    }
+    for (let i = 0; i < resultmarkers.length; i++) resultmarkers[i].remove();
 
     for (let i = 0; i < resultdivs.length; i++) {
         resultdivs[i].style.opacity = "";
@@ -322,29 +320,26 @@ function search() { // free me please
     }
 
     if (isochrone == null) {
-        // error handling
-        console.log("no no absolutely not");
+        errorVis("No intersections between all users!");
+        resulterror = true;
         return;
     }
 
     let polygons = isochrone.geometry.coordinates;
-    if (polygons.length != 1) {
-        polygons.sort(function(a, b){
-            // ASC  -> a.length - b.length
-            // DESC -> b.length - a.length
-            return b[0].length - a[0].length;
-        });
-    }
+    if (polygons.length != 1) polygons.sort(function(a, b) {return b[0].length - a[0].length;});
+    
     let results = [];
 
     for (let i = 0; i < polygons.length; i++) {
+        let string = "";
         let curr = polygons[i];
         if (polygons.length != 1) curr = curr[0];
-        let string = "";
+
         for (let j = 0; j < curr.length; j++) {
             if (j != 0) string += ",";
             string = string.concat(curr[j][1] + "," + curr[j][0]);
         }
+
         const searchbase = "http://www.mapquestapi.com/search/v2/polygon?key=GviXRAtG1HuP7jTZI5WwPpND9Gu7UHfj&ambiguities=ignore&"
         var query = searchbase + "polygon=" + string + "&maxMatches=" + maxResults + "&hostedData=mqap.ntpois|group_sic_code=?|" + SICcode;
 
@@ -354,13 +349,13 @@ function search() { // free me please
             dataType: 'jsonp',
         }).done(function (data) {
             if (data.resultsCount == 0 || data.info.statusCode != 0) {
-                if (data.info.statusCode != 0) {
-                    console.log(i + " " + string);
-                }
-                // ERROR HANDLING
-            } else {
-                results = results.concat(data.searchResults);
-                console.log(results);
+                if (data.info.statusCode != 0) console.log("Error for polygon #" + i + ", status code " + data.info.statusCode);
+            } else results = results.concat(data.searchResults);
+
+            if (results.length == 0) {
+                errorVis("No results for your selection!");
+                resulterror = true;
+                return;
             }
 
             if (i == polygons.length - 1) {
@@ -371,10 +366,9 @@ function search() { // free me please
                     document.getElementById("choiceAddress" + k).innerHTML = curr2.fields.address;
                     document.getElementById("restaurantType" + k).innerHTML = curr2.fields.group_sic_code_name;
 
-                    // Set options
-                    resultmarkers.push(new mapboxgl.Marker({
-                        color: resultcolor,
-                    }).setLngLat([curr2.fields.disp_lng, curr2.fields.disp_lat]).setPopup(new mapboxgl.Popup().setHTML(k)).addTo(map));
+                    resultmarkers.push(new mapboxgl.Marker({color: resultcolor})
+                    .setLngLat([curr2.fields.disp_lng, curr2.fields.disp_lat])
+                    .setPopup(new mapboxgl.Popup().setHTML(k)).addTo(map));
 
                     k++;
                 }
@@ -382,48 +376,37 @@ function search() { // free me please
                     resultdivs[k].style.opacity = "0";
                     k++;
                 }
+                resulterror = false;
             }
         });
     }
+
+    if (resulterror) backTabs();
 }
 
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    VONNE CODE    @@@@@@@@@@@@@@@@
+// INTERFACE --------------------------------------------------------
+const inputContainer = document.getElementById("inputContainer");
+const resultsContainer = document.getElementById("resultsContainer");
 
-// defining containers for div switching
-let inputContainer = document.getElementById("inputContainer");
-let resultsContainer = document.getElementById("resultsContainer");
-
-// defining buddy stuff
-let addPic = document.getElementById("addPic"); // pic in bud tab 1
-let addBud1 = document.getElementById("addBud1"); //bud tab 1
-let removeBud1 = document.getElementById("removeBud1"); // 'x' photo in bud tab 1
-let bud1Text = document.getElementById("bud1Text"); // text in bud tab 1
-let myLocationTab = document.getElementById("myLocationTab"); // my location tab
-let buddy1Tab = document.getElementById("buddy1Tab");
-
-
-let input = document.getElementById("input"); // bottom div, my location
-let input2 = document.getElementById("input2"); // bottom div, bud 1
-
-
-// switching divs
-// your location input
-let traveltimeinput = document.getElementById("traveltimeinput");
+// switches to result screen if the results are valid
 let resultsDivOn = () => {
-    // @@@@@ VONNE CODE
-    // switching visibility of divs
-    if (traveltimeinput.value >= 1) {
-        inputContainer.classList.add("disappear");
-        resultsContainer.classList.remove("disappear");
-    }
-}
-
-function addUser() {
-    let newuserindex = users.length;
-    if (newuserindex >= maxUsers) {
-        // error handling
+    if (resulterror) {
+        errorVis("Unable to get your results, try adjusting the parameters!");
         return;
     }
+    inputContainer.classList.add("disappear");
+    resultsContainer.classList.remove("disappear");
+}
+
+// adds user if there is space
+function addUser() {
+    let newuserindex = users.length;
+
+    if (newuserindex >= maxUsers) {
+        errorVis("Max number of users already reached!");
+        return;
+    }
+
     users.push(new User(newuserindex));
 
     users[newuserindex].tab.classList.remove("disappear");
@@ -433,20 +416,16 @@ function addUser() {
 
     to.tab.classList.add("activeTab");
     to.tab.classList.remove("inactiveTab");
-
-    //deactivate mylocation tab
     from.tab.classList.remove("activeTab");
     from.tab.classList.add("inactiveTab");
-
-    //switch form to bud's form
     to.form.classList.remove("disappear");
     from.form.classList.add("disappear");
 
     currentuser = newuserindex;
 }
-
 document.getElementById("addBud").addEventListener("click", addUser);
 
+// removes user at the given index, then calls search()
 function removeUser(index) {
     switchtabs(index, 0);
     users[index].tab.classList.add("disappear");
@@ -457,13 +436,12 @@ function removeUser(index) {
     users[index].marker.remove();
     users.splice(index, 1);
     document.getElementById("locationinput" + index).value = "";
-
     search();
 }
-
 document.getElementById("removeBud1").addEventListener("click", (e) => {removeUser(1)});
 document.getElementById("removeBud2").addEventListener("click", (e) => {removeUser(2)});
 
+// switches tabs unless indexes are the same
 function switchtabs(fromindex, toindex) {
     if (fromindex == toindex) return;
     let from = users[fromindex];
@@ -471,12 +449,8 @@ function switchtabs(fromindex, toindex) {
 
     to.tab.classList.add("activeTab");
     to.tab.classList.remove("inactiveTab");
-
-    //deactivate mylocation tab
     from.tab.classList.remove("activeTab");
     from.tab.classList.add("inactiveTab");
-
-    //switch form to bud's form
     to.form.classList.remove("disappear");
     from.form.classList.add("disappear");
 
@@ -487,13 +461,12 @@ function switchtabs(fromindex, toindex) {
 
     currentuser = toindex;
 }
-
 document.getElementById("tab0").addEventListener("click", (e) => {switchtabs(currentuser, 0)});
 document.getElementById("tab1").addEventListener("click", (e) => {switchtabs(currentuser, 1)});
 document.getElementById("tab2").addEventListener("click", (e) => {switchtabs(currentuser, 2)});
 
 
-// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@  RESULTS STUFF
+// RESULTS SCREEN ------------------------------------------
 let tooltipContainer = document.getElementById("tooltipContainer");
 
 function copyAddress(e) {
@@ -508,7 +481,6 @@ function copyAddress(e) {
     tooltipContainer.classList.add("appear");
     setTimeout(function(){tooltipContainer.classList.remove("appear"); tooltipContainer.classList.add("disppear");}, 1000 ); 
 }
-
 let copybuttons = document.getElementsByClassName("linkIcon");
 for (let i = 0; i < copybuttons.length; i++) {
     copybuttons[i].addEventListener("click", (e) => { copyAddress(e) });
@@ -521,10 +493,6 @@ let backTabs = () => {
     up.classList.add("upright");
     myElement.style.bottom = "-20em";
 }
-
-// results div up
-let up = document.getElementById("up");
-
 
 // HAMMER ----------------------------------------------------------
 let myElement = document.getElementById('resultsDiv');
@@ -564,27 +532,36 @@ mc.on("panright", function (ev) {
     myElement.style.bottom = "-20em";
 });
 
-div0.on("panleft", function (ev) {
-    inputContainer.classList.add("disappear");
-    resultsContainer.classList.remove("disappear");
-})
+div0.on("panleft", resultsDivOn);
+div1.on("panleft", resultsDivOn);
+div2.on("panleft", resultsDivOn);
 
-div1.on("panleft", function (ev) {
-    inputContainer.classList.add("disappear");
-    resultsContainer.classList.remove("disappear");
-})
+// results div up
+let up = document.getElementById("up");
+let resultsUp = () =>{
+    if (myElement.classList.contains("divDown")){
+        myElement.style.bottom = "0em";
+        up.classList.add("rotate");
+        up.classList.remove("upright");
+        myElement.classList.remove("divDown");
+        myElement.classList.add("divUp");
 
-div2.on("panleft", function (ev) {
-    inputContainer.classList.add("disappear");
-    resultsContainer.classList.remove("disappear");
-})
+    } else {
+        myElement.style.bottom = "-20em";
+        up.classList.remove("rotate");
+        up.classList.add("upright");
+        myElement.classList.remove("divUp");
+        myElement.classList.add("divDown");
+    }
+}
 
 // ERROR GARBAGE -------------------------------------------------------
 let errorContainer = document.getElementById("errorContainer");
 
-let errorVis = () => {
+let errorVis = (message) => {
     errorContainer.classList.remove("disappear");
     errorContainer.classList.add("appearStay");
+    document.getElementById("errortext").innerHTML = message;
 }
 
 let closeErrorContainer = () => {
