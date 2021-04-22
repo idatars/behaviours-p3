@@ -337,6 +337,7 @@ function search() { // free me please i can't do this anymore
     if (polygons.length != 1) polygons.sort(function(a, b) {return b[0].length - a[0].length;});
     
     let results = [];
+    let promises = [];
 
     for (let i = 0; i < polygons.length; i++) {
         let string = "";
@@ -351,7 +352,7 @@ function search() { // free me please i can't do this anymore
         const searchbase = "https://www.mapquestapi.com/search/v2/polygon?key=GviXRAtG1HuP7jTZI5WwPpND9Gu7UHfj&ambiguities=ignore&"
         var query = searchbase + "polygon=" + string + "&maxMatches=" + maxResults + "&hostedData=mqap.ntpois|group_sic_code=?|" + SICcode;
 
-        $.ajax({
+        let request = $.ajax({
             method: 'GET',
             url: query,
             dataType: 'jsonp',
@@ -361,39 +362,66 @@ function search() { // free me please i can't do this anymore
             } else results = results.concat(data.searchResults);
 
             if (results.length == 0) {
-                errorVis("No results for your selection!");
                 resulterror = true;
                 backTabs();
                 return;
             }
 
-            if (i == polygons.length - 1) {
-                let k = 0;
-                while (k < results.length) {
-                    let curr2 = results[k];
-                    document.getElementById("choice" + k).innerHTML = curr2.name;
-                    document.getElementById("choiceAddress" + k).innerHTML = curr2.fields.address;
-                    document.getElementById("restaurantType" + k).innerHTML = curr2.fields.group_sic_code_name;
-
-                    resultmarkers.push(new mapboxgl.Marker({color: resultcolor})
-                    .setLngLat([curr2.fields.disp_lng, curr2.fields.disp_lat])
-                    .setPopup(new mapboxgl.Popup().setHTML(resultlabels[k])).addTo(map));
-
-                    k++;
-                }
-                while (k < resultdivs.length) {
-                    resultdivs[k].style.opacity = "0";
-                    k++;
-                }
-                resulterror = false;
-            }
+            //if (i == polygons.length - 1) renderresults(results);
             if (resulterror) backTabs();
         }).fail(function() {
             errorVis("Unable to retrieve results for your selection");
             resulterror = true;
             backTabs();
+            return;
         });
+
+        promises.push(request);
     }
+
+    resulterror = false;
+
+    $.when.apply(null, promises).done(function() {
+        renderresults(results);
+    });
+}
+
+function renderresults(results) {
+    let poi = users[0].posn;
+    for (let i = 1; i < users.length; i++) {
+        if (users[i].posn != null) {
+            poi = turf.center(turf.points([users[i].posn, poi])).geometry.coordinates;
+        }
+    }
+    
+    poi = turf.point(poi);
+    results.sort(function(a, b) {
+        let s = turf.distance(turf.point([a.fields.lng, a.fields.lat]), poi);
+        let t = turf.distance(turf.point([b.fields.lng, b.fields.lat]), poi);
+        console.log(s);
+        console.log(t);
+        return s - t;
+    });
+
+    let k = 0;
+    while (k < results.length) {
+        let curr2 = results[k];
+        document.getElementById("choice" + k).innerHTML = curr2.name;
+        document.getElementById("choiceAddress" + k).innerHTML = curr2.fields.address;
+        document.getElementById("restaurantType" + k).innerHTML = curr2.fields.group_sic_code_name;
+
+        resultmarkers.push(new mapboxgl.Marker({color: resultcolor})
+        .setLngLat([curr2.fields.disp_lng, curr2.fields.disp_lat])
+        .setPopup(new mapboxgl.Popup().setHTML(resultlabels[k])).addTo(map));
+
+        k++;
+    }
+    let resultdivs = document.getElementsByClassName("resultsdiv");
+    while (k < resultdivs.length) {
+        resultdivs[k].style.opacity = "0";
+        k++;
+    }
+    resulterror = false;
 }
 
 // INTERFACE --------------------------------------------------------
