@@ -1,6 +1,6 @@
 // Written by Vonne and Isabel :)
 
-// GLOBALS CONSTANTS --------------------------------------------------
+// GLOBAL CONSTANTS --------------------------------------------------
 const MAPBOX_ACCESS_CODE = "pk.eyJ1IjoiaWRhdGFycyIsImEiOiJja2w5MHB2dWUwMzYyMndwZmM0djM3ZDVsIn0.T7Tr5He16zekwZXuBL9uUw";
 const defaultposn = [-79.3832, 43.6532]; // Toronto
 const usercolours = ["#FFA011", "#800000", "#6A7A5B"];
@@ -433,9 +433,8 @@ function renderresults(results) {
         }
     }
 
-    let k = 0;
     let resultssofar = 0
-    while (k < collapsedresults.length) {
+    for (let k = 0; k < collapsedresults.length; k++) {
         let curr = collapsedresults[k];
         let popuptext = "";
 
@@ -450,11 +449,19 @@ function renderresults(results) {
             resultssofar++;
         }
 
-        resultmarkers.push(new mapboxgl.Marker({color: resultcolor})
-        .setLngLat(curr.posn)
-        .setPopup(new mapboxgl.Popup().setHTML(popuptext)).addTo(map));
+        if (curr.results.length == 1) { // regular marker
+            resultmarkers.push(new mapboxgl.Marker({color: resultcolor})
+            .setLngLat(curr.posn)
+            .setPopup(new mapboxgl.Popup().setHTML(popuptext)).addTo(map));
+        } else { // bubble
+            let bubble = document.createElement('div');
+            bubble.classList.add("resultBubble"); // vonne's problem
+            bubble.innerHTML = curr.results.length;
 
-        k++;
+            resultmarkers.push(new mapboxgl.Marker(bubble)
+            .setLngLat(curr.posn)
+            .setPopup(new mapboxgl.Popup().setHTML(popuptext)).addTo(map));
+        }
     }
 
     let resultdivs = document.getElementsByClassName("resultsdiv");

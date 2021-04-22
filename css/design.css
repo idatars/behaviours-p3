@@ -696,3 +696,16 @@ transition: 0.5s all;
     width: 20px;
     height: 20px;
 }
+
+.resultBubble {
+    background-color: #635E54;
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    font-size: 1.3em;
+    font-weight: bold;
+    text-align: center;
+    padding: 5px;
+    border-radius: 50%;
+    border: 2px solid rgba(39, 37, 33, 0.3);
+}
