@@ -88,6 +88,7 @@ body {
     position: relative;
 }
 
+
 #error {
     position: absolute;
     width: 80%;
@@ -455,7 +456,18 @@ animation-iteration-count:inherit;
     opacity: 0;
 }
 } 
- 
+
+
+.disappearAnim{
+    animation-name: disappearing;
+    animation-fill-mode: forwards;
+    animation-duration: 1s;
+    animation-iteration-count: inherit;
+}
+ @keyframes disappearing{
+0%{opacity: 1;}
+
+100% {opacity: 0; }}
 
 .appearStay {
     display: block;
@@ -634,20 +646,38 @@ transition: 0.5s all;
 #errorContainer{ 
     z-index: 696969696969;
     border-radius: 12px;
-   margin: 0 auto;
+   margin: 40% auto;
+   position: absolute;
+   top: 40%;
+   /* bottom: 0; */
+   left: 0;
+   right: 0;
     /* display: block; */
     /* color: red; */
-    background-color: #AAAAAA;
+    /* background-color: #AAAAAA; */
     color: white;
-    position: absolute;
-    top: 45%;
-    left: 0;
-    right: 0;
+  margin: 0 auto;
     width: 17em;
     text-align: center;
     transition: 1s all;
-    opacity: 0;
+    opacity: 1;
 }
+
+#errorOutside{
+    /* width: 100%;*/
+  height: 100vh;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    /* width: 40%; */
+    /* height: 50%; */
+    margin: 0 auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 20390;
+}
+
 #errorMessage{
     padding: 1.5em 1em;
     background-color: #F0E8DC;
@@ -660,4 +690,9 @@ transition: 0.5s all;
     top: 5px;
     right: 10px;
 
+
+}
+#closeErrorButton{
+    width: 20px;
+    height: 20px;
 }

@@ -463,14 +463,15 @@
 
 
    <!-- ERROR MESSAGE -->
-  <div class="disappear" id="errorContainer">
+  <div class="disappear" id="errorOutside">
+    <div id="errorContainer">
     <div id="errorMessage">
-      <a id='closeError' width="25px" height="25px" onclick="closeErrorContainer();"><img src="img/closeError.svg"></a>
+      <a id='closeError'  onclick="closeErrorContainer();"><img id="closeErrorButton" src="img/closeError.svg"></a>
       <img src="img/sadboi.svg"><br>
       <span id="errortext"></span>
     </div>
   </div>
-
+</div>
   <div id="myElement"></div>
 
   <!-- // Add your Mapbox access token -->
