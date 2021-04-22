@@ -572,7 +572,7 @@ let resultsUp = () => {
 }
 
 // ERROR GARBAGE -------------------------------------------------------
-let errorContainer = document.getElementById("errorContainer");
+let errorContainer = document.getElementById("errorOutside");
 
 let errorVis = (message) => {
     errorContainer.classList.remove("disappear");
@@ -582,5 +582,6 @@ let errorVis = (message) => {
 
 let closeErrorContainer = () => {
     errorContainer.classList.remove("appearStay");
-    errorContainer.classList.add("disappear");
+    errorContainer.classList.add("disappearAnim");
+    setTimeout(function(){errorContainer.classList.add("disappear"); errorContainer.classList.remove("disappearAnim")}, 1000 ); 
 }
