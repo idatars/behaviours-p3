@@ -386,6 +386,15 @@ function search() { // free me please i can't do this anymore
     });
 }
 
+function CollapsedResult(result) {
+    this.posn = [result.fields.lng, result.fields.lat]; // [lng, lat]
+    this.results = [result]
+
+    this.add = function(newresult) {
+        this.results.push(newresult);
+    }
+}
+
 function renderresults(results) {
     let poi = users[0].posn;
     for (let i = 1; i < users.length; i++) {
@@ -398,28 +407,60 @@ function renderresults(results) {
     results.sort(function(a, b) {
         let s = turf.distance(turf.point([a.fields.lng, a.fields.lat]), poi);
         let t = turf.distance(turf.point([b.fields.lng, b.fields.lat]), poi);
-        console.log(s);
-        console.log(t);
         return s - t;
     });
 
+    console.log(results);
+
+    let collapsedresults = [];
+    collapsedresults.member = function(posn) {
+        for (let j = 0; j < collapsedresults.length; j++) {
+            if (collapsedresults[j].posn[0] == posn[0] && collapsedresults[j].posn[1] == posn[1]) return j;
+        }
+        return -1;
+    }
+
+    // generate collapsed result list
+    for (let i = 0; i < results.length; i++) {
+        if (i >= resultlabels.length) break; //important
+
+        let posn = [results[i].fields.lng, results[i].fields.lat];
+        let n = collapsedresults.member(posn);
+        if (n != -1) {
+            collapsedresults[n].add(results[i]);
+        } else {
+            collapsedresults.push(new CollapsedResult(results[i]));
+        }
+    }
+
     let k = 0;
-    while (k < results.length) {
-        let curr2 = results[k];
-        document.getElementById("choice" + k).innerHTML = curr2.name;
-        document.getElementById("choiceAddress" + k).innerHTML = curr2.fields.address;
-        document.getElementById("restaurantType" + k).innerHTML = curr2.fields.group_sic_code_name;
+    let resultssofar = 0
+    while (k < collapsedresults.length) {
+        let curr = collapsedresults[k];
+        let popuptext = "";
+
+        for (let l = 0; l < curr.results.length; l++) {
+            document.getElementById("choice" + k).innerHTML = curr.results[l].fields.name;
+            document.getElementById("choiceAddress" + k).innerHTML = curr.results[l].fields.address;
+            document.getElementById("restaurantType" + k).innerHTML = curr.results[l].fields.group_sic_code_name;
+
+            if (popuptext == "") popuptext += resultlabels[resultssofar];
+            else popuptext += ", " + resultlabels[resultssofar];
+
+            resultssofar++;
+        }
 
         resultmarkers.push(new mapboxgl.Marker({color: resultcolor})
-        .setLngLat([curr2.fields.disp_lng, curr2.fields.disp_lat])
-        .setPopup(new mapboxgl.Popup().setHTML(resultlabels[k])).addTo(map));
+        .setLngLat(curr.posn)
+        .setPopup(new mapboxgl.Popup().setHTML(popuptext)).addTo(map));
 
         k++;
     }
+
     let resultdivs = document.getElementsByClassName("resultsdiv");
-    while (k < resultdivs.length) {
-        resultdivs[k].style.opacity = "0";
-        k++;
+    while (resultssofar < resultdivs.length) {
+        resultdivs[resultssofar].style.opacity = "0";
+        resultssofar++;
     }
     resulterror = false;
 }
