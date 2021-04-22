@@ -439,9 +439,9 @@ function renderresults(results) {
         let popuptext = "";
 
         for (let l = 0; l < curr.results.length; l++) {
-            document.getElementById("choice" + k).innerHTML = curr.results[l].fields.name;
-            document.getElementById("choiceAddress" + k).innerHTML = curr.results[l].fields.address;
-            document.getElementById("restaurantType" + k).innerHTML = curr.results[l].fields.group_sic_code_name;
+            document.getElementById("choice" + resultssofar).innerHTML = curr.results[l].fields.name;
+            document.getElementById("choiceAddress" + resultssofar).innerHTML = curr.results[l].fields.address;
+            document.getElementById("restaurantType" + resultssofar).innerHTML = curr.results[l].fields.group_sic_code_name;
 
             if (popuptext == "") popuptext += resultlabels[resultssofar];
             else popuptext += ", " + resultlabels[resultssofar];
