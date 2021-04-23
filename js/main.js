@@ -84,8 +84,8 @@ function onSuccess(position) {
     geolocation = [position.coords.longitude, position.coords.latitude];
     users[0].posn = [position.coords.longitude, position.coords.latitude];
 
-    setTimeout(() => {splash.classList.add('display-none'); loadIso(users[0]);}, 2000);
-      
+    setTimeout(() => { splash.classList.add('display-none'); loadIso(users[0]); }, 2000);
+
     map = new mapboxgl.Map({
         container: 'map', // Specify the container ID
         style: 'mapbox://styles/mapbox/light-v10', // Specify which map style to use
@@ -99,7 +99,7 @@ function onError(error) {
     console.log(error);
     geolocationerror = true;
 
-    setTimeout(() => {splash.classList.add('display-none');}, 2000);
+    setTimeout(() => { splash.classList.add('display-none'); }, 2000);
 
     map = new mapboxgl.Map({
         container: 'map', // Specify the container ID
@@ -194,7 +194,7 @@ function update(e, userindex) {
             user.boxFillDriving.classList.add("inactiveBox");
             user.bikingIcon.classList.add("inactiveIcon");
             user.drivingIcon.classList.add("inactiveIcon");
-            
+
         } else if (e.target.value == "cycling") {
             // add color to selected button
             user.boxFillBiking.classList.remove("inactiveBox");
@@ -258,9 +258,9 @@ function update(e, userindex) {
     if (user.loaded) getIso(user);
     else loadIso(user);
 }
-document.getElementById("inputform0").addEventListener("change", (e) => {update(e, 0)});
-document.getElementById("inputform1").addEventListener("change", (e) => {update(e, 1)});
-document.getElementById("inputform2").addEventListener("change", (e) => {update(e, 2)});
+document.getElementById("inputform0").addEventListener("change", (e) => { update(e, 0) });
+document.getElementById("inputform1").addEventListener("change", (e) => { update(e, 1) });
+document.getElementById("inputform2").addEventListener("change", (e) => { update(e, 2) });
 
 document.getElementById("pickFood").addEventListener("change", () => {
     let value = document.getElementById("pickFood").value;
@@ -302,7 +302,7 @@ function updatePosn(user) {
 // SEARCH
 function search() { // free me please i can't do this anymore
     let resultdivs = document.getElementsByClassName("resultsdiv");
-    let options = {tolerance: 0.00005, highQuality: false};
+    let options = { tolerance: 0.00005, highQuality: false };
 
     if (users[0].isochrone == null) {
         errorVis("Error in getting results!");
@@ -310,7 +310,7 @@ function search() { // free me please i can't do this anymore
         resulterror = true;
         return;
     }
-    
+
     for (let i = 0; i < resultmarkers.length; i++) resultmarkers[i].remove();
 
     for (let i = 0; i < resultdivs.length; i++) {
@@ -328,37 +328,64 @@ function search() { // free me please i can't do this anymore
     }
 
     if (isochrone == null) {
-        errorVis("No intersections between all users!");
         resulterror = true;
         return;
     }
 
     let polygons = isochrone.geometry.coordinates;
-    if (polygons.length != 1) polygons.sort(function(a, b) {return b[0].length - a[0].length;});
-    
+    if (polygons.length != 1) polygons.sort(function (a, b) { return b[0].length - a[0].length; });
+
     let results = [];
     let promises = [];
 
     for (let i = 0; i < polygons.length; i++) {
-        let string = "";
+        let string = [];
         let curr = polygons[i];
         if (polygons.length != 1) curr = curr[0];
 
         for (let j = 0; j < curr.length; j++) {
-            if (j != 0) string += ",";
-            string = string.concat(curr[j][1] + "," + curr[j][0]);
+            //if (j != 0) string += ",";
+            string.push(curr[j][1]);
+            string.push(curr[j][0]);
+            //string = string.concat(curr[j][1] + "," + curr[j][0]);
         }
 
-        const searchbase = "https://www.mapquestapi.com/search/v2/polygon?key=GviXRAtG1HuP7jTZI5WwPpND9Gu7UHfj&ambiguities=ignore&"
-        var query = searchbase + "polygon=" + string + "&maxMatches=" + maxResults + "&hostedData=mqap.ntpois|group_sic_code=?|" + SICcode;
+        const searchbase = "https://www.mapquestapi.com/search/v2/polygon?key=GviXRAtG1HuP7jTZI5WwPpND9Gu7UHfj"
+        //var query = searchbase + "polygon=" + string + "&maxMatches=" + maxResults + "&hostedData=mqap.ntpois|group_sic_code=?|" + SICcode;
+
+        /*if (query.length >= 10000) { // segment the polygon
+            if (polygons.length == 1) {
+                errorVis("Area is too large!");
+                resulterror = true;
+                return;
+            }
+        }*/
+
+        let senddata = {
+            "polygon": string,
+            "hostedDataList": [
+                {
+                    "tableName": "mqap.ntpois",
+                    "extraCriteria": "group_sic_code = ?",
+                    "parameters": ["'" + SICcode + "'"] // yes, this is actually necessary
+                }
+            ],
+            "options": {maxMatches: maxResults}
+        }
 
         let request = $.ajax({
-            method: 'GET',
-            url: query,
-            dataType: 'jsonp',
+            type: "POST",
+            url: searchbase,
+            dataType: "json",
+            data: JSON.stringify(senddata),
+            contentType: "application/json",
         }).done(function (data) {
+            console.log("test");
             if (data.resultsCount == 0 || data.info.statusCode != 0) {
-                if (data.info.statusCode != 0) console.log("Error for polygon #" + i + ", status code " + data.info.statusCode);
+                if (data.info.statusCode != 0) {
+                    console.log("Error for polygon #" + i + ", status code " + data.info.statusCode);
+                    console.log(data);
+                }
             } else results = results.concat(data.searchResults);
 
             if (results.length == 0) {
@@ -369,11 +396,13 @@ function search() { // free me please i can't do this anymore
 
             //if (i == polygons.length - 1) renderresults(results);
             if (resulterror) backTabs();
-        }).fail(function() {
-            errorVis("Unable to retrieve results for your selection");
-            resulterror = true;
-            backTabs();
-            return;
+        }).fail(function () {
+            if (polygons.length == 1) {
+                errorVis("Unable to retrieve results for your selection");
+                resulterror = true;
+                backTabs();
+                return;
+            }
         });
 
         promises.push(request);
@@ -381,7 +410,7 @@ function search() { // free me please i can't do this anymore
 
     resulterror = false;
 
-    $.when.apply(null, promises).done(function() {
+    $.when.apply(null, promises).done(function () {
         renderresults(results);
     });
 }
@@ -390,7 +419,7 @@ function CollapsedResult(result) {
     this.posn = [result.fields.lng, result.fields.lat]; // [lng, lat]
     this.results = [result]
 
-    this.add = function(newresult) {
+    this.add = function (newresult) {
         this.results.push(newresult);
     }
 }
@@ -402,9 +431,9 @@ function renderresults(results) {
             poi = turf.center(turf.points([users[i].posn, poi])).geometry.coordinates;
         }
     }
-    
+
     poi = turf.point(poi);
-    results.sort(function(a, b) {
+    results.sort(function (a, b) {
         let s = turf.distance(turf.point([a.fields.lng, a.fields.lat]), poi);
         let t = turf.distance(turf.point([b.fields.lng, b.fields.lat]), poi);
         return s - t;
@@ -413,7 +442,7 @@ function renderresults(results) {
     console.log(results);
 
     let collapsedresults = [];
-    collapsedresults.member = function(posn) {
+    collapsedresults.member = function (posn) {
         for (let j = 0; j < collapsedresults.length; j++) {
             if (collapsedresults[j].posn[0] == posn[0] && collapsedresults[j].posn[1] == posn[1]) return j;
         }
@@ -450,17 +479,17 @@ function renderresults(results) {
         }
 
         if (curr.results.length == 1) { // regular marker
-            resultmarkers.push(new mapboxgl.Marker({color: resultcolor})
-            .setLngLat(curr.posn)
-            .setPopup(new mapboxgl.Popup().setHTML(popuptext)).addTo(map));
+            resultmarkers.push(new mapboxgl.Marker({ color: resultcolor })
+                .setLngLat(curr.posn)
+                .setPopup(new mapboxgl.Popup().setHTML(popuptext)).addTo(map));
         } else { // bubble
             let bubble = document.createElement('div');
             bubble.classList.add("resultBubble"); // vonne's problem
             bubble.innerHTML = curr.results.length;
 
             resultmarkers.push(new mapboxgl.Marker(bubble)
-            .setLngLat(curr.posn)
-            .setPopup(new mapboxgl.Popup().setHTML(popuptext)).addTo(map));
+                .setLngLat(curr.posn)
+                .setPopup(new mapboxgl.Popup().setHTML(popuptext)).addTo(map));
         }
     }
 
@@ -531,14 +560,14 @@ function resetUser(index) {
         map.removeSource("iso" + index);
     }
     users[index].marker.remove();
-    
+
     users[index] = new User(index);
 
     document.getElementById("locationinput" + index).value = "";
     if (users[0].isochrone != null) search();
 }
-document.getElementById("removeBud1").addEventListener("click", (e) => {resetUser(1)});
-document.getElementById("removeBud2").addEventListener("click", (e) => {resetUser(2)});
+document.getElementById("removeBud1").addEventListener("click", (e) => { resetUser(1) });
+document.getElementById("removeBud2").addEventListener("click", (e) => { resetUser(2) });
 
 // switches tabs unless indexes are the same
 function switchtabs(fromindex, toindex) {
@@ -560,9 +589,9 @@ function switchtabs(fromindex, toindex) {
 
     currentuser = toindex;
 }
-document.getElementById("tab0").addEventListener("click", (e) => {switchtabs(currentuser, 0)});
-document.getElementById("tab1").addEventListener("click", (e) => {switchtabs(currentuser, 1)});
-document.getElementById("tab2").addEventListener("click", (e) => {switchtabs(currentuser, 2)});
+document.getElementById("tab0").addEventListener("click", (e) => { switchtabs(currentuser, 0) });
+document.getElementById("tab1").addEventListener("click", (e) => { switchtabs(currentuser, 1) });
+document.getElementById("tab2").addEventListener("click", (e) => { switchtabs(currentuser, 2) });
 
 
 // RESULTS SCREEN ------------------------------------------
@@ -570,7 +599,7 @@ let tooltipContainer = document.getElementById("tooltipContainer");
 
 function copyAddress(e) {
     let aux = document.createElement("input");
-  tooltipContainer.style.display="block";
+    tooltipContainer.style.display = "block";
     let index = e.target.dataset.resultindex;
     aux.setAttribute("value", document.getElementById("choice" + index).innerHTML + " - " + document.getElementById("choiceAddress" + index).innerHTML);
     document.body.appendChild(aux);
@@ -580,7 +609,7 @@ function copyAddress(e) {
     tooltipContainer.classList.remove("disappear");
     //   tooltipContainer.style.left="0";
     tooltipContainer.classList.add("appear");
-    setTimeout(function(){tooltipContainer.classList.remove("appear"); tooltipContainer.classList.add("disppear"); tooltipContainer.style.display="none"}, 2000 ); 
+    setTimeout(function () { tooltipContainer.classList.remove("appear"); tooltipContainer.classList.add("disppear"); tooltipContainer.style.display = "none" }, 2000);
 }
 let copybuttons = document.getElementsByClassName("linkIcon");
 for (let i = 0; i < copybuttons.length; i++) {
@@ -634,7 +663,7 @@ div2.on("panleft", resultsDivOn);
 // results div up
 let up = document.getElementById("up");
 let resultsUp = () => {
-    if (myElement.classList.contains("divDown")){
+    if (myElement.classList.contains("divDown")) {
         myElement.style.bottom = "0em";
         up.classList.add("rotate");
         up.classList.remove("upright");
@@ -662,5 +691,5 @@ let errorVis = (message) => {
 let closeErrorContainer = () => {
     errorContainer.classList.remove("appearStay");
     errorContainer.classList.add("disappearAnim");
-    setTimeout(function(){errorContainer.classList.add("disappear"); errorContainer.classList.remove("disappearAnim")}, 1000 ); 
+    setTimeout(function () { errorContainer.classList.add("disappear"); errorContainer.classList.remove("disappearAnim") }, 1000);
 }
